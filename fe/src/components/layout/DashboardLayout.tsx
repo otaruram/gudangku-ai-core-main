@@ -89,24 +89,7 @@ export function DashboardLayout() {
     }
   }, []);
 
-  const handleCleanup = () => {
-    if (confirm("Jalankan Pembersihan Bulanan?\n\nKebijakan: Data lokal > 1 tahun akan dihapus.\nIni akan me-refresh aplikasi.")) {
-      // ... (existing logic check) ...
-      // Mark cleaned today
-      localStorage.setItem('lastCleanup', Date.now().toString());
-      // ... 
-      localStorage.removeItem('forecastChart');
-      localStorage.removeItem('bestSellers');
-      localStorage.removeItem('stockAlerts');
 
-      // ... (rest of logic same as before, essentially just ensuring the check above is correct)
-      // To avoid complexities with large replacement, I will target the specific blocks.
-      // Actually, I can just replace the useEffect block and the Dropdown items block separately using multi_replace?
-      // Or just one big block if they are close?
-      // They are far apart (lines 78 vs 306).
-      // I'll use multi_replace.
-    }
-  };
 
   const handleCleanup = () => {
     if (confirm("Jalankan Pembersihan Bulanan?\n\nKebijakan: Data lokal > 1 tahun akan dihapus.\nIni akan me-refresh aplikasi.")) {
