@@ -1,0 +1,69 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  sku         String   @unique
+  category    String?
+  stockLevel  Int      @default(0)
+  reorderPoint Int     @default(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  forecasts   Forecast[]
+
+  @@map("products")
+}
+
+model Forecast {
+  id          String   @id @default(uuid())
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  forecastDate DateTime
+  predictedValue Float
+  lowerBound  Float
+  upperBound  Float
+  createdAt   DateTime @default(now())
+  
+  @@map("forecasts")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @db.Text
+  category    String?
+  // embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime @default(now())
+  
+  @@map("documents")
+}
+
+model ChatLog {
+  id          String   @id @default(uuid())
+  question    String
+  answer      String   @db.Text
+  isHelpful   Boolean?
+  createdAt   DateTime @default(now())
+  
+  @@map("chat_logs")
+}
+
+model PredictionHistory {
+  id          String   @id @default(uuid())
+  filename    String
+  plotData    Json     // Stores the forecast result (ds, yhat, etc.)
+  createdAt   DateTime @default(now())
+
+  @@map("prediction_history")
+}
