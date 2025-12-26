@@ -63,8 +63,22 @@ async def ask_gudangku_ai(user_question: str, file: UploadFile = None):
     4. Gunakan bahasa Indonesia yang baik.
     """
     
+    # Retry Logic for Rate Limiting (429) & Transient Errors
+    from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+    # Define retry policy: Wait 2^x seconds between retries, max 5 attempts.
+    # Useful for Groq's Rate Limits or Network blips.
+    @retry(
+        stop=stop_after_attempt(5), 
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(Exception), # Catch broad exceptions inside the retry wrapper
+        reraise=True 
+    )
+    async def call_groq_with_retry():
+        return await llm.ainvoke(prompt)
+
     try:
-        response = await llm.ainvoke(prompt) # Async invoke
+        response = await call_groq_with_retry() # Async invoke with retry
         content = response.content
 
         # Save to DB for History
@@ -83,4 +97,7 @@ async def ask_gudangku_ai(user_question: str, file: UploadFile = None):
 
         return content
     except Exception as e:
-        return f"Error contacting AI: {str(e)}"
+        error_msg = str(e)
+        if "429" in error_msg or "Rate limit" in error_msg:
+             return "Mohon maaf, trafik AI sedang sangat tinggi (Rate Limit). Coba lagi dalam 30 detik."
+        return f"Error contacting AI: {error_msg}"
