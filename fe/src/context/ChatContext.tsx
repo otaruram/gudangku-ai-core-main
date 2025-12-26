@@ -79,7 +79,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
                 formData.append("file", file);
             }
 
-            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5173/api";
+            const API_URL = import.meta.env.VITE_API_URL || "https://gudangku-ai.onrender.com/api";
 
             const response = await fetch(`${API_URL}/chat`, {
                 method: "POST",
