@@ -7,45 +7,85 @@ echo "Build Start..."
 # 1. Install Dependencies
 pip install -r requirements.txt
 
-# 2. Fetch Binaries FIRST (before generate)
-echo "Fetching Prisma Binaries..."
-prisma py fetch
-
-# 3. Generate Prisma Client
+# 2. Generate Prisma Client FIRST (this triggers binary download)
 echo "Generating Prisma Client..."
 prisma generate --schema=prisma/schema.prisma
+
+# 3. DEBUG: Find where binaries actually are
+echo "=== DEBUGGING: Searching for Prisma binaries ==="
+echo "Checking common locations..."
+
+# Check cache directory
+if [ -d "/opt/render/.cache/prisma-python" ]; then
+  echo "Cache directory exists, contents:"
+  find /opt/render/.cache/prisma-python -name "*query-engine*" -type f 2>/dev/null || echo "No binaries in cache"
+fi
+
+# Check venv directory
+if [ -d "/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma" ]; then
+  echo "Venv prisma directory exists, contents:"
+  find /opt/render/project/src/.venv/lib/python3.11/site-packages/prisma -name "*query-engine*" -type f 2>/dev/null || echo "No binaries in venv"
+fi
+
+# Check home directory
+if [ -d "$HOME/.cache/prisma-python" ]; then
+  echo "Home cache directory exists, contents:"
+  find "$HOME/.cache/prisma-python" -name "*query-engine*" -type f 2>/dev/null || echo "No binaries in home cache"
+fi
+
+echo "=== END DEBUG ==="
 
 # 4. Copy binaries to the be/ directory where the app runs
 echo "Copying Prisma binaries to runtime location..."
 
-# Dynamically find Prisma binaries in cache (version-agnostic)
-CACHE_BASE="/opt/render/.cache/prisma-python/binaries"
-if [ -d "$CACHE_BASE" ]; then
-  echo "Searching for binaries in cache..."
-  find "$CACHE_BASE" -name "prisma-query-engine-*" -type f -exec cp {} . \; 2>/dev/null || true
+# Try all possible locations
+FOUND=false
+
+# Location 1: Cache
+if find /opt/render/.cache/prisma-python -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
+  echo "✓ Copied from cache"
+  FOUND=true
 fi
 
-# Also try from venv if installed there
-VENV_BASE="/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma"
-if [ -d "$VENV_BASE" ]; then
-  echo "Searching for binaries in venv..."
-  find "$VENV_BASE" -name "prisma-query-engine-*" -type f -exec cp {} . \; 2>/dev/null || true
+# Location 2: Venv
+if find /opt/render/project/src/.venv/lib/python3.11/site-packages/prisma -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
+  echo "✓ Copied from venv"
+  FOUND=true
+fi
+
+# Location 3: Home cache
+if find "$HOME/.cache/prisma-python" -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
+  echo "✓ Copied from home cache"
+  FOUND=true
+fi
+
+# Fallback: Try to fetch explicitly
+if [ "$FOUND" = false ]; then
+  echo "⚠ Binaries not found, trying explicit fetch..."
+  prisma py fetch
+  
+  # Try copying again after fetch
+  if find /opt/render/.cache/prisma-python -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
+    echo "✓ Copied after fetch"
+    FOUND=true
+  fi
 fi
 
 # List what we have now
-echo "Binaries copied to current directory:"
-ls -lh prisma-query-engine-* 2>/dev/null || echo "WARNING: No binaries found in current directory!"
+echo "Binaries in current directory ($(pwd)):"
+ls -lh prisma-query-engine-* 2>/dev/null || echo "⚠ WARNING: No binaries found!"
 
 # Make sure binaries are executable
 chmod +x prisma-query-engine-* 2>/dev/null || true
 
-# Verify we have the right binary for Render (debian-openssl-3.0.x)
+# Verify we have the right binary
 if [ -f "prisma-query-engine-debian-openssl-3.0.x" ]; then
-  echo "✓ Found required binary: prisma-query-engine-debian-openssl-3.0.x"
+  echo "✓ SUCCESS: Found required binary: prisma-query-engine-debian-openssl-3.0.x"
+  ls -lh prisma-query-engine-debian-openssl-3.0.x
 else
-  echo "⚠ WARNING: prisma-query-engine-debian-openssl-3.0.x not found!"
-  echo "Available binaries:"
-  ls -1 prisma-query-engine-* 2>/dev/null || echo "None"
+  echo "✗ CRITICAL: prisma-query-engine-debian-openssl-3.0.x not found!"
+  echo "This will cause runtime errors!"
+  exit 1
 fi
 
 echo "Build Finished Successfully."
