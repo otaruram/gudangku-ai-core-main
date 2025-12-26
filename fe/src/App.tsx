@@ -2,8 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ForecastProvider } from "@/context/ForecastContext";
+import { ChatProvider } from "@/context/ChatContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Pages & Layouts
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
@@ -13,11 +16,11 @@ import DocAssistant from "./pages/dashboard/DocAssistant";
 import History from "./pages/dashboard/History";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
-
-import { ChatProvider } from "@/context/ChatContext";
+// Auth
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
