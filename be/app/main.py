@@ -25,7 +25,7 @@ app = FastAPI(
 # 1. Frontend Domains (Hardcoded as requested)
 fe_origins = [
     "http://localhost:5000",
-    "https://gudangku.vercel.app",
+    "https://gudangku-steel.vercel.app",
 ]
 
 # 2. Backend Domains (From .env)
