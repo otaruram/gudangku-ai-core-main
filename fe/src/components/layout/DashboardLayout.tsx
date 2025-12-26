@@ -78,8 +78,8 @@ export function DashboardLayout() {
   useEffect(() => {
     const lastCleanup = localStorage.getItem('lastCleanup');
     if (!lastCleanup) {
-      // First run or never cleaned
-      setShowCleanup(true);
+      // First run: Start the timer (SET date), do NOT show notification
+      localStorage.setItem('lastCleanup', Date.now().toString());
     } else {
       const diff = Date.now() - parseInt(lastCleanup);
       const thirtyDays = 30 * 24 * 60 * 60 * 1000;
@@ -88,6 +88,25 @@ export function DashboardLayout() {
       }
     }
   }, []);
+
+  const handleCleanup = () => {
+    if (confirm("Jalankan Pembersihan Bulanan?\n\nKebijakan: Data lokal > 1 tahun akan dihapus.\nIni akan me-refresh aplikasi.")) {
+      // ... (existing logic check) ...
+      // Mark cleaned today
+      localStorage.setItem('lastCleanup', Date.now().toString());
+      // ... 
+      localStorage.removeItem('forecastChart');
+      localStorage.removeItem('bestSellers');
+      localStorage.removeItem('stockAlerts');
+
+      // ... (rest of logic same as before, essentially just ensuring the check above is correct)
+      // To avoid complexities with large replacement, I will target the specific blocks.
+      // Actually, I can just replace the useEffect block and the Dropdown items block separately using multi_replace?
+      // Or just one big block if they are close?
+      // They are far apart (lines 78 vs 306).
+      // I'll use multi_replace.
+    }
+  };
 
   const handleCleanup = () => {
     if (confirm("Jalankan Pembersihan Bulanan?\n\nKebijakan: Data lokal > 1 tahun akan dihapus.\nIni akan me-refresh aplikasi.")) {
@@ -304,13 +323,13 @@ export function DashboardLayout() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem>
+                <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  Settings (Locked)
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
                   <Shield className="mr-2 h-4 w-4" />
-                  Security
+                  Security (Locked)
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
