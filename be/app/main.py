@@ -26,6 +26,7 @@ app = FastAPI(
 fe_origins = [
     "http://localhost:5000",
     "https://gudangku-steel.vercel.app",
+    "https://gudangku.space",
 ]
 
 # 2. Backend Domains (From .env)

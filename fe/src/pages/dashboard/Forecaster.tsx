@@ -30,7 +30,7 @@ export default function Forecaster() {
       formData.append("file", file);
 
       const API_URL = import.meta.env.VITE_API_URL || "https://gudangku-ai.onrender.com";
-      const response = await fetch(`${API_URL}/forecast/365`, {
+      const response = await fetch(`${API_URL}/api/forecast/365`, {
         method: "POST",
         body: formData,
       });
