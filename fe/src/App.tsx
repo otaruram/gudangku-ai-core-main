@@ -16,6 +16,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 import { ChatProvider } from "@/context/ChatContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -25,17 +27,21 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardHome />} />
-                <Route path="forecaster" element={<Forecaster />} />
-                <Route path="assistant" element={<DocAssistant />} />
-                <Route path="history" element={<History />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<DashboardHome />} />
+                    <Route path="forecaster" element={<Forecaster />} />
+                    <Route path="assistant" element={<DocAssistant />} />
+                    <Route path="history" element={<History />} />
+                  </Route>
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </ChatProvider>

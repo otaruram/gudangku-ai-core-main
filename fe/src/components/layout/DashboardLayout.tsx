@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
   TrendingUp,
@@ -32,24 +32,30 @@ const navItems = [
 ];
 
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserAvatar(user.user_metadata?.avatar_url || user.user_metadata?.picture || null);
-        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || "User");
-      }
-    };
-    getUser();
-  }, []);
+  // Get user data from auth context
+  const userAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "User";
+
+  // Handle logout
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Logout gagal: " + error.message);
+    } else {
+      toast.success("Berhasil logout");
+      navigate("/", { replace: true });
+    }
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -307,11 +313,12 @@ export function DashboardLayout() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/" className="text-destructive focus:text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </Link>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

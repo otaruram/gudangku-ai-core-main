@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,19 @@ import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);

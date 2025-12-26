@@ -1,11 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Box, TrendingUp, MessageSquare, Shield, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -13,7 +23,7 @@ export default function Landing() {
       <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
         <div className="container mx-auto flex h-14 items-center justify-between px-4 sm:h-16 sm:px-6">
           <Logo />
-          
+
           {/* Desktop Nav */}
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -23,7 +33,7 @@ export default function Landing() {
               Tentang
             </a>
           </nav>
-          
+
           {/* Desktop CTAs */}
           <div className="hidden items-center gap-3 md:flex">
             <Button variant="ghost" asChild>
@@ -38,9 +48,9 @@ export default function Landing() {
           </div>
 
           {/* Mobile Menu Button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
@@ -52,15 +62,15 @@ export default function Landing() {
         {mobileMenuOpen && (
           <div className="border-t border-border bg-background px-4 py-4 md:hidden">
             <nav className="flex flex-col gap-3">
-              <a 
-                href="#features" 
+              <a
+                href="#features"
                 className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Fitur
               </a>
-              <a 
-                href="#about" 
+              <a
+                href="#about"
                 className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -83,7 +93,7 @@ export default function Landing() {
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden pt-14 sm:pt-16">
         {/* Background Glow */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
-        
+
         <div className="container relative z-10 mx-auto px-4 py-16 text-center sm:px-6 sm:py-24">
           {/* Badge */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 sm:mb-8 sm:px-4 sm:py-1.5">
@@ -99,7 +109,7 @@ export default function Landing() {
 
           {/* Subheadline */}
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg md:text-xl">
-            Dulu, gudang adalah tempat yang penuh dengan misteri. Kami membangun Gudangku 
+            Dulu, gudang adalah tempat yang penuh dengan misteri. Kami membangun Gudangku
             untuk memberikan 'otak' pada gudang Anda. Bukan sekadar mencatat, tapi memprediksi masa depan.
           </p>
 
@@ -127,7 +137,7 @@ export default function Landing() {
                   app.gudangku.ai
                 </div>
               </div>
-              
+
               {/* Dashboard Preview Content */}
               <div className="flex h-48 bg-background sm:h-80">
                 {/* Mini Sidebar - Hidden on very small screens */}
@@ -139,7 +149,7 @@ export default function Landing() {
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Preview Cards */}
                 <div className="flex-1 p-3 sm:p-6">
                   <div className="grid gap-2 sm:gap-4 sm:grid-cols-3">
@@ -159,7 +169,7 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            
+
             {/* Floating Elements - Hidden on mobile */}
             <div className="absolute -right-4 -top-4 hidden animate-float rounded-lg border border-accent/20 bg-card p-3 shadow-lg sm:block">
               <div className="flex items-center gap-2">
