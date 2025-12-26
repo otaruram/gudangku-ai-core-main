@@ -31,41 +31,54 @@ prisma generate --schema=prisma/schema.prisma
 # 5. Copy the debian-openssl-3.0.x binary to current directory
 echo "=== Copying binaries to $(pwd) ==="
 
-# Function to copy binary from a location
-copy_binary_from() {
-    local search_path="$1"
-    local binary_name="prisma-query-engine-debian-openssl-3.0.x"
-    
-    if [ -d "$search_path" ]; then
-        local found_binary=$(find "$search_path" -name "$binary_name" -type f 2>/dev/null | head -1)
-        if [ -n "$found_binary" ]; then
-            echo "Found binary at: $found_binary"
-            cp "$found_binary" .
-            return 0
-        fi
-    fi
-    return 1
-}
+# Prisma Python installs binaries in these specific locations:
+# 1. ${VENV}/lib/python3.11/site-packages/prisma/binaries/
+# 2. ${CACHE}/.cache/prisma-python/binaries/
 
-# Try multiple locations in order of priority
+BINARY_NAME="prisma-query-engine-debian-openssl-3.0.x"
 BINARY_FOUND=false
 
-echo "Trying cache directory..."
-if copy_binary_from "/opt/render/.cache/prisma-python"; then
-    BINARY_FOUND=true
+# Location 1: Check venv package binaries subfolder (most likely)
+VENV_BINARY_PATH="/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma/binaries"
+if [ -d "$VENV_BINARY_PATH" ]; then
+    echo "Searching in venv binaries: $VENV_BINARY_PATH"
+    # Look for any query-engine binary
+    for binary in "$VENV_BINARY_PATH"/*query-engine*; do
+        if [ -f "$binary" ]; then
+            echo "Found binary: $binary"
+            # Copy and rename to the expected name
+            cp "$binary" "./$BINARY_NAME"
+            BINARY_FOUND=true
+            break
+        fi
+    done
 fi
 
+# Location 2: Check cache directory
 if [ "$BINARY_FOUND" = false ]; then
-    echo "Trying venv directory..."
-    if copy_binary_from "/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma"; then
-        BINARY_FOUND=true
+    CACHE_BINARY_PATH="/opt/render/.cache/prisma-python/binaries"
+    if [ -d "$CACHE_BINARY_PATH" ]; then
+        echo "Searching in cache binaries: $CACHE_BINARY_PATH"
+        found=$(find "$CACHE_BINARY_PATH" -name "*query-engine*" -type f 2>/dev/null | head -1)
+        if [ -n "$found" ]; then
+            echo "Found binary: $found"
+            cp "$found" "./$BINARY_NAME"
+            BINARY_FOUND=true
+        fi
     fi
 fi
 
+# Location 3: Check home cache
 if [ "$BINARY_FOUND" = false ]; then
-    echo "Trying home cache..."
-    if copy_binary_from "$HOME/.cache/prisma-python"; then
-        BINARY_FOUND=true
+    HOME_CACHE="$HOME/.cache/prisma-python/binaries"
+    if [ -d "$HOME_CACHE" ]; then
+        echo "Searching in home cache: $HOME_CACHE"
+        found=$(find "$HOME_CACHE" -name "*query-engine*" -type f 2>/dev/null | head -1)
+        if [ -n "$found" ]; then
+            echo "Found binary: $found"
+            cp "$found" "./$BINARY_NAME"
+            BINARY_FOUND=true
+        fi
     fi
 fi
 
