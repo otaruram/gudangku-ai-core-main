@@ -18,26 +18,34 @@ prisma generate --schema=prisma/schema.prisma
 # 4. Copy binaries to the be/ directory where the app runs
 echo "Copying Prisma binaries to runtime location..."
 
-# Find where binaries are and copy them
-BINARY_CACHE="/opt/render/.cache/prisma-python/binaries/5.17.0/393aa359c9ad4a4bb28630fb5613f9c281cde053"
-
-if [ -d "$BINARY_CACHE" ]; then
-  echo "Found binary cache directory"
-  cp "$BINARY_CACHE"/prisma-query-engine-* . 2>/dev/null || true
+# Dynamically find Prisma binaries in cache (version-agnostic)
+CACHE_BASE="/opt/render/.cache/prisma-python/binaries"
+if [ -d "$CACHE_BASE" ]; then
+  echo "Searching for binaries in cache..."
+  find "$CACHE_BASE" -name "prisma-query-engine-*" -type f -exec cp {} . \; 2>/dev/null || true
 fi
 
 # Also try from venv if installed there
-VENV_BINARIES="/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma/binaries"
-if [ -d "$VENV_BINARIES" ]; then
-  echo "Found venv binary directory"
-  find "$VENV_BINARIES" -name "prisma-query-engine-*" -exec cp {} . \; 2>/dev/null || true
+VENV_BASE="/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma"
+if [ -d "$VENV_BASE" ]; then
+  echo "Searching for binaries in venv..."
+  find "$VENV_BASE" -name "prisma-query-engine-*" -type f -exec cp {} . \; 2>/dev/null || true
 fi
 
 # List what we have now
-echo "Binaries in current directory:"
+echo "Binaries copied to current directory:"
 ls -lh prisma-query-engine-* 2>/dev/null || echo "WARNING: No binaries found in current directory!"
 
 # Make sure binaries are executable
 chmod +x prisma-query-engine-* 2>/dev/null || true
+
+# Verify we have the right binary for Render (debian-openssl-3.0.x)
+if [ -f "prisma-query-engine-debian-openssl-3.0.x" ]; then
+  echo "✓ Found required binary: prisma-query-engine-debian-openssl-3.0.x"
+else
+  echo "⚠ WARNING: prisma-query-engine-debian-openssl-3.0.x not found!"
+  echo "Available binaries:"
+  ls -1 prisma-query-engine-* 2>/dev/null || echo "None"
+fi
 
 echo "Build Finished Successfully."
