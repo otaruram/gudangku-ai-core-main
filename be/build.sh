@@ -3,89 +3,102 @@
 set -o errexit
 
 echo "Build Start..."
+echo "Working directory: $(pwd)"
 
 # 1. Install Dependencies
+echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
-# 2. Generate Prisma Client FIRST (this triggers binary download)
-echo "Generating Prisma Client..."
+# 2. CRITICAL: Fetch binaries BEFORE generate
+echo "=== Fetching Prisma binaries explicitly ==="
+prisma py fetch
+
+# 3. DEBUG: Verify where fetch put the binaries
+echo "=== Searching for binaries after fetch ==="
+echo "Checking /opt/render/.cache/prisma-python:"
+find /opt/render/.cache/prisma-python -name "*query-engine*" 2>/dev/null || echo "  Not found in cache"
+
+echo "Checking venv:"
+find /opt/render/project/src/.venv/lib/python3.11/site-packages/prisma -name "*query-engine*" 2>/dev/null || echo "  Not found in venv"
+
+echo "Checking home cache:"
+find "$HOME/.cache/prisma-python" -name "*query-engine*" 2>/dev/null || echo "  Not found in home"
+
+# 4. Generate Prisma Client (should use already-fetched binaries)
+echo "=== Generating Prisma Client ==="
 prisma generate --schema=prisma/schema.prisma
 
-# 3. DEBUG: Find where binaries actually are
-echo "=== DEBUGGING: Searching for Prisma binaries ==="
-echo "Checking common locations..."
+# 5. Copy the debian-openssl-3.0.x binary to current directory
+echo "=== Copying binaries to $(pwd) ==="
 
-# Check cache directory
-if [ -d "/opt/render/.cache/prisma-python" ]; then
-  echo "Cache directory exists, contents:"
-  find /opt/render/.cache/prisma-python -name "*query-engine*" -type f 2>/dev/null || echo "No binaries in cache"
+# Function to copy binary from a location
+copy_binary_from() {
+    local search_path="$1"
+    local binary_name="prisma-query-engine-debian-openssl-3.0.x"
+    
+    if [ -d "$search_path" ]; then
+        local found_binary=$(find "$search_path" -name "$binary_name" -type f 2>/dev/null | head -1)
+        if [ -n "$found_binary" ]; then
+            echo "Found binary at: $found_binary"
+            cp "$found_binary" .
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# Try multiple locations in order of priority
+BINARY_FOUND=false
+
+echo "Trying cache directory..."
+if copy_binary_from "/opt/render/.cache/prisma-python"; then
+    BINARY_FOUND=true
 fi
 
-# Check venv directory
-if [ -d "/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma" ]; then
-  echo "Venv prisma directory exists, contents:"
-  find /opt/render/project/src/.venv/lib/python3.11/site-packages/prisma -name "*query-engine*" -type f 2>/dev/null || echo "No binaries in venv"
+if [ "$BINARY_FOUND" = false ]; then
+    echo "Trying venv directory..."
+    if copy_binary_from "/opt/render/project/src/.venv/lib/python3.11/site-packages/prisma"; then
+        BINARY_FOUND=true
+    fi
 fi
 
-# Check home directory
-if [ -d "$HOME/.cache/prisma-python" ]; then
-  echo "Home cache directory exists, contents:"
-  find "$HOME/.cache/prisma-python" -name "*query-engine*" -type f 2>/dev/null || echo "No binaries in home cache"
+if [ "$BINARY_FOUND" = false ]; then
+    echo "Trying home cache..."
+    if copy_binary_from "$HOME/.cache/prisma-python"; then
+        BINARY_FOUND=true
+    fi
 fi
 
-echo "=== END DEBUG ==="
-
-# 4. Copy binaries to the be/ directory where the app runs
-echo "Copying Prisma binaries to runtime location..."
-
-# Try all possible locations
-FOUND=false
-
-# Location 1: Cache
-if find /opt/render/.cache/prisma-python -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
-  echo "✓ Copied from cache"
-  FOUND=true
-fi
-
-# Location 2: Venv
-if find /opt/render/project/src/.venv/lib/python3.11/site-packages/prisma -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
-  echo "✓ Copied from venv"
-  FOUND=true
-fi
-
-# Location 3: Home cache
-if find "$HOME/.cache/prisma-python" -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
-  echo "✓ Copied from home cache"
-  FOUND=true
-fi
-
-# Fallback: Try to fetch explicitly
-if [ "$FOUND" = false ]; then
-  echo "⚠ Binaries not found, trying explicit fetch..."
-  prisma py fetch
-  
-  # Try copying again after fetch
-  if find /opt/render/.cache/prisma-python -name "prisma-query-engine-debian-openssl-3.0.x" -type f -exec cp {} . \; 2>/dev/null; then
-    echo "✓ Copied after fetch"
-    FOUND=true
-  fi
-fi
-
-# List what we have now
-echo "Binaries in current directory ($(pwd)):"
-ls -lh prisma-query-engine-* 2>/dev/null || echo "⚠ WARNING: No binaries found!"
-
-# Make sure binaries are executable
-chmod +x prisma-query-engine-* 2>/dev/null || true
-
-# Verify we have the right binary
+# 6. Verify the binary exists and is executable
+echo "=== Verification ==="
 if [ -f "prisma-query-engine-debian-openssl-3.0.x" ]; then
-  echo "✓ SUCCESS: Found required binary: prisma-query-engine-debian-openssl-3.0.x"
-  ls -lh prisma-query-engine-debian-openssl-3.0.x
+    echo "✓ Binary found in current directory"
+    chmod +x prisma-query-engine-debian-openssl-3.0.x
+    ls -lh prisma-query-engine-debian-openssl-3.0.x
+    
+    # Test if binary is executable
+    if ./prisma-query-engine-debian-openssl-3.0.x --version 2>/dev/null; then
+        echo "✓ Binary is executable and working"
+    else
+        echo "⚠ Binary exists but may not be executable (this is sometimes OK)"
+    fi
+    
+    echo "✓ BUILD SUCCESS"
 else
-  echo "✗ CRITICAL: prisma-query-engine-debian-openssl-3.0.x not found!"
-  echo "This will cause runtime errors!"
-  exit 1
+    echo "✗ CRITICAL ERROR: Binary not found after all attempts!"
+    echo ""
+    echo "Debug info:"
+    echo "Current directory: $(pwd)"
+    echo "Files in current directory:"
+    ls -la
+    echo ""
+    echo "This means prisma py fetch did not download the binary."
+    echo "Possible causes:"
+    echo "  1. Network issue preventing download"
+    echo "  2. Prisma version incompatibility"
+    echo "  3. binaryTargets not properly configured"
+    echo ""
+    exit 1
 fi
 
 echo "Build Finished Successfully."
