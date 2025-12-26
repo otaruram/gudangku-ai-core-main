@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const location = useLocation();
 
   useEffect(() => {
-    // 1. Cek session saat ini (Check existing session)
+    // 1. Ambil session awal secara asinkron
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
     checkSession();
 
-    // 2. Listen perubahan auth (Penting untuk menangani redirect OAuth Google)
+    // 2. Dengarkan perubahan status auth (termasuk saat berhasil redirect dari Google)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setIsLoading(false);
@@ -26,17 +26,19 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return () => subscription.unsubscribe();
   }, []);
 
-  // Tampilkan loading screen agar tidak langsung redirect ke landing
+  // Tampilkan loading screen agar tidak langsung mental ke Landing Page
   if (isLoading) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
-        <p className="mt-4 text-sm text-muted-foreground animate-pulse">Memverifikasi sesi...</p>
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
+        <p className="mt-4 text-sm text-muted-foreground animate-pulse font-medium">
+          Menyiapkan Command Center...
+        </p>
       </div>
     );
   }
 
-  // Jika tidak ada session setelah loading selesai, lempar ke landing
+  // Jika loading selesai dan tidak ada session, baru lempar ke landing
   if (!session) {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
