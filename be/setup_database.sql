@@ -1,9 +1,16 @@
 -- 1. Enable Extensions
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 2. Create Tables (Matching Prisma Schema)
+-- 2. Create Tables (Matching Prisma Schema) with IF NOT EXISTS
 
--- products
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id uuid REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  full_name text,
+  avatar_url text,
+  email text,
+  updated_at timestamp with time zone default timezone('utc'::text, now())
+);
+
 CREATE TABLE IF NOT EXISTS products (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "name" TEXT NOT NULL,
@@ -16,7 +23,6 @@ CREATE TABLE IF NOT EXISTS products (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "products_sku_key" ON "products"("sku");
 
--- forecasts
 CREATE TABLE IF NOT EXISTS forecasts (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "productId" TEXT,
@@ -28,7 +34,6 @@ CREATE TABLE IF NOT EXISTS forecasts (
     CONSTRAINT "forecasts_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
--- documents
 CREATE TABLE IF NOT EXISTS documents (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "title" TEXT NOT NULL,
@@ -37,7 +42,6 @@ CREATE TABLE IF NOT EXISTS documents (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- chat_logs
 CREATE TABLE IF NOT EXISTS chat_logs (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "question" TEXT NOT NULL,
@@ -46,7 +50,6 @@ CREATE TABLE IF NOT EXISTS chat_logs (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- prediction_history
 CREATE TABLE IF NOT EXISTS prediction_history (
     "id" TEXT NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     "filename" TEXT NOT NULL,
@@ -55,37 +58,61 @@ CREATE TABLE IF NOT EXISTS prediction_history (
 );
 
 -- 3. Enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE forecasts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prediction_history ENABLE ROW LEVEL SECURITY;
 
--- 4. Create Policies
--- Note: In production, assume specific auth roles. For now, we allow broad access + auth checks.
+-- 4. Create Policies (DROP IF EXISTS first to prevent errors)
+
+-- Profiles
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON profiles;
+CREATE POLICY "Public profiles are viewable by everyone." ON profiles FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users can insert their own profile." ON profiles;
+CREATE POLICY "Users can insert their own profile." ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update own profile." ON profiles;
+CREATE POLICY "Users can update own profile." ON profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Products
+DROP POLICY IF EXISTS "Public Read Products" ON products;
 CREATE POLICY "Public Read Products" ON products FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Auth Write Products" ON products;
 CREATE POLICY "Auth Write Products" ON products FOR ALL USING (auth.role() = 'authenticated');
 
 -- Forecasts
+DROP POLICY IF EXISTS "Public Read Forecasts" ON forecasts;
 CREATE POLICY "Public Read Forecasts" ON forecasts FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Auth Write Forecasts" ON forecasts;
 CREATE POLICY "Auth Write Forecasts" ON forecasts FOR ALL USING (auth.role() = 'authenticated');
 
 -- Documents
+DROP POLICY IF EXISTS "Public Read Documents" ON documents;
 CREATE POLICY "Public Read Documents" ON documents FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Auth Write Documents" ON documents;
 CREATE POLICY "Auth Write Documents" ON documents FOR ALL USING (auth.role() = 'authenticated');
 
 -- ChatLogs
+DROP POLICY IF EXISTS "Public Insert ChatLogs" ON chat_logs;
 CREATE POLICY "Public Insert ChatLogs" ON chat_logs FOR INSERT WITH CHECK (true);
-CREATE POLICY "Public Read ChatLogs" ON chat_logs FOR SELECT USING (true); -- Allow history viewing
+
+DROP POLICY IF EXISTS "Public Read ChatLogs" ON chat_logs;
+CREATE POLICY "Public Read ChatLogs" ON chat_logs FOR SELECT USING (true);
 
 -- PredictionHistory
+DROP POLICY IF EXISTS "Public Read PredictionHistory" ON prediction_history;
 CREATE POLICY "Public Read PredictionHistory" ON prediction_history FOR SELECT USING (true);
-CREATE POLICY "Public Insert PredictionHistory" ON prediction_history FOR INSERT WITH CHECK (true); -- Allow saving forecasts
+
+DROP POLICY IF EXISTS "Public Insert PredictionHistory" ON prediction_history;
+CREATE POLICY "Public Insert PredictionHistory" ON prediction_history FOR INSERT WITH CHECK (true);
 
 -- 5. Enable Realtime (Supabase)
--- Add tables to the publication to enable Realtime subscriptions
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'products') THEN
@@ -101,3 +128,19 @@ BEGIN
     ALTER PUBLICATION supabase_realtime ADD TABLE prediction_history;
   END IF;
 END $$;
+
+-- 6. Trigger for New User (Auto Profile Creation)
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, avatar_url, email)
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url', new.email);
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger (Drop first to avoid duplicates if needed, but CREATE OR REPLACE works for functions, not triggers usually)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

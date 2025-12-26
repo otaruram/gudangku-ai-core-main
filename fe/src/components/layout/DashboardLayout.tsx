@@ -31,10 +31,25 @@ const navItems = [
   { title: "History", href: "/dashboard/history", icon: Clock },
 ];
 
+import { supabase } from "@/lib/supabaseClient";
+
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserAvatar(user.user_metadata?.avatar_url || user.user_metadata?.picture || null);
+        setUserName(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || "User");
+      }
+    };
+    getUser();
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -271,11 +286,21 @@ export function DashboardLayout() {
             {/* Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 px-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                    A
-                  </div>
-                  <span className="hidden text-sm font-medium sm:inline">Admin</span>
+                <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-secondary/50 rounded-full h-10 w-10 md:h-auto md:w-auto md:px-3 md:rounded-md">
+                  {userAvatar ? (
+                    <img
+                      src={userAvatar}
+                      alt="User"
+                      className="h-8 w-8 rounded-full border border-border object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {userName ? userName.charAt(0).toUpperCase() : 'A'}
+                    </div>
+                  )}
+                  <span className="hidden text-sm font-medium sm:inline truncate max-w-[100px]">
+                    {userName || "Admin"}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
