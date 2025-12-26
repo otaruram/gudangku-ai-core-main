@@ -306,14 +306,6 @@ export function DashboardLayout() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings (Locked)
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Security (Locked)
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/" className="text-destructive focus:text-destructive">
