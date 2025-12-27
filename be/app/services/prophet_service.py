@@ -203,11 +203,20 @@ async def generate_forecast(file: UploadFile, horizon: int = 30):
                     "stock_alerts": stock_analysis
                 }
 
+                # Sanitize filename to prevent GraphQL parsing errors
+                # Remove or replace special characters that break GraphQL queries
+                safe_filename = file.filename or "unknown.csv"
+                # Replace problematic characters with safe alternatives
+                import re
+                safe_filename = re.sub(r'[^\w\s\-\.]', '_', safe_filename)
+                # Remove multiple underscores/spaces
+                safe_filename = re.sub(r'[_\s]+', '_', safe_filename)
+                
                 # IMPORTANT: Prisma 'Json' type expects a Python Dictionary, not a string.
                 # It handles serialization automatically.
                 await db.predictionhistory.create(
                     data={
-                        "filename": file.filename or "unknown.csv",
+                        "filename": safe_filename,
                         "plotData": full_storage_data 
                     }
                 )
