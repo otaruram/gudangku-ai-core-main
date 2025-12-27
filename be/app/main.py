@@ -22,17 +22,32 @@ app = FastAPI(
 )
 
 # CORS Settings
-# 1. Frontend Domains (Hardcoded as requested)
+# 1. Frontend Domains (Hardcoded)
 fe_origins = [
     "http://localhost:5000",
+    "http://localhost:5173",  # Vite dev server
     "https://gudangku-steel.vercel.app",
     "https://gudangku.space",
 ]
 
-# 2. Backend Domains (From .env)
-be_origins = [origin.strip() for origin in settings.BACKEND_DOMAINS.split(",")]
+# 2. Backend Domains (Hardcoded + From .env)
+be_origins = [
+    "http://localhost:5173",  # Local backend
+    "https://gudangku-ai.onrender.com",  # Production backend
+]
 
-origins = fe_origins + be_origins
+# 3. Additional domains from environment variable (if provided)
+if settings.BACKEND_DOMAINS:
+    env_origins = [origin.strip() for origin in settings.BACKEND_DOMAINS.split(",") if origin.strip()]
+    be_origins.extend(env_origins)
+
+# Remove duplicates while preserving order
+seen = set()
+origins = []
+for origin in fe_origins + be_origins:
+    if origin not in seen:
+        seen.add(origin)
+        origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
