@@ -28,6 +28,7 @@ fe_origins = [
     "http://localhost:5173",  # Vite dev server
     "https://gudangku-steel.vercel.app",
     "https://gudangku.space",
+    "https://www.gudangku.space",  # www subdomain
 ]
 
 # 2. Backend Domains (Hardcoded + From .env)
