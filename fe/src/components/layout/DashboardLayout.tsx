@@ -75,24 +75,39 @@ export function DashboardLayout() {
 
   /* 
     Cleanup Logic: 
-    - Check last cleanup date.
-    - If > 30 days, showing notification.
-    - On click, reset lastCleanup date and clear data older than 1 year (conceptually, practically clearing cache).
+    - Monthly cleanup cycle (30 days)
+    - Shows countdown in notification
+    - Highlights notification when cleanup is due
   */
   const [showCleanup, setShowCleanup] = useState(false);
+  const [daysUntilCleanup, setDaysUntilCleanup] = useState<number>(0);
 
   useEffect(() => {
-    const lastCleanup = localStorage.getItem('lastCleanup');
-    if (!lastCleanup) {
-      // First run: Start the timer (SET date), do NOT show notification
-      localStorage.setItem('lastCleanup', Date.now().toString());
-    } else {
-      const diff = Date.now() - parseInt(lastCleanup);
-      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-      if (diff > thirtyDays) {
-        setShowCleanup(true);
+    const calculateCleanupStatus = () => {
+      const lastCleanup = localStorage.getItem('lastCleanup');
+      const now = Date.now();
+
+      if (!lastCleanup) {
+        // First run: Start the timer
+        localStorage.setItem('lastCleanup', now.toString());
+        setDaysUntilCleanup(30);
+        setShowCleanup(false);
+      } else {
+        const lastCleanupTime = parseInt(lastCleanup);
+        const diffMs = now - lastCleanupTime;
+        const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+        const daysLeft = 30 - diffDays;
+
+        setDaysUntilCleanup(Math.max(0, daysLeft));
+        setShowCleanup(diffDays >= 30);
       }
-    }
+    };
+
+    calculateCleanupStatus();
+
+    // Update countdown every hour
+    const interval = setInterval(calculateCleanupStatus, 60 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
 
 
@@ -268,7 +283,7 @@ export function DashboardLayout() {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuContent align="end" className="w-72">
                 <div className="p-2 border-b text-xs font-semibold text-muted-foreground">
                   Notifikasi Sistem
                 </div>
@@ -277,17 +292,26 @@ export function DashboardLayout() {
                     <div className="flex flex-col gap-1 w-full">
                       <span className="font-medium flex items-center gap-2 text-destructive">
                         <span className="w-2 h-2 rounded-full bg-destructive" />
-                        Maintenance Bulanan
+                        🔔 Maintenance Bulanan Diperlukan
                       </span>
-                      <span className="text-xs text-muted-foreground">Waktunya bersihkan data {'>'} 1 tahun.</span>
+                      <span className="text-xs text-muted-foreground">
+                        Sudah waktunya bersihkan data lama. Klik untuk jalankan maintenance.
+                      </span>
                     </div>
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem disabled>
-                    <span className="text-xs text-muted-foreground">Tidak ada notifikasi baru.</span>
+                    <div className="flex flex-col gap-1 w-full">
+                      <span className="font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        ✅ Sistem Bersih
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Maintenance berikutnya: <strong>{daysUntilCleanup} hari lagi</strong>
+                      </span>
+                    </div>
                   </DropdownMenuItem>
                 )}
-
               </DropdownMenuContent>
             </DropdownMenu>
 
