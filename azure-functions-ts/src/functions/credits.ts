@@ -11,14 +11,15 @@ async function creditsHandler(
   claims: UserClaims
 ): Promise<HttpResponseInit> {
   try {
-    const user = await getCredits(claims.sub);
+    const user = await getCredits(claims.sub, claims.email);
     return {
       status: 200,
       jsonBody: {
         user_id: user.id,
         current_credits: user.current_credits,
         last_refresh_date: user.last_refresh_date,
-        daily_quota: 10,
+        daily_quota: user.role === "admin" ? "unlimited" : 10,
+        role: user.role ?? "user",
       },
     };
   } catch (err: any) {

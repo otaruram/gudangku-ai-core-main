@@ -34,6 +34,8 @@ const navItems = [
   { title: "History", href: "/dashboard/history", icon: Clock },
 ];
 
+const adminNavItem = { title: "Admin Panel", href: "/dashboard/admin", icon: Shield };
+
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
@@ -87,6 +89,7 @@ export function DashboardLayout() {
   const [daysUntilCleanup, setDaysUntilCleanup] = useState<number>(0);
   const [credits, setCredits] = useState<number | null>(null);
   const [dailyQuota, setDailyQuota] = useState<number>(10);
+  const [userRole, setUserRole] = useState<string>("user");
 
   useEffect(() => {
     const calculateCleanupStatus = () => {
@@ -127,7 +130,8 @@ export function DashboardLayout() {
         if (res.ok) {
           const data = await res.json();
           setCredits(data.current_credits);
-          setDailyQuota(data.daily_quota ?? 10);
+          setDailyQuota(data.daily_quota === "unlimited" ? Infinity : (data.daily_quota ?? 10));
+          setUserRole(data.role ?? "user");
         }
       } catch {
         /* ignore, credits display is non-critical */
@@ -244,6 +248,24 @@ export function DashboardLayout() {
                 </Link>
               );
             })}
+            {/* Admin nav — only visible to admins */}
+            {userRole === "admin" && (() => {
+              const isActive = location.pathname === adminNavItem.href;
+              return (
+                <Link
+                  to={adminNavItem.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 mt-2 border-t border-sidebar-border pt-3",
+                    isActive
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  )}
+                >
+                  <adminNavItem.icon className="h-5 w-5 shrink-0" />
+                  <span className={cn(collapsed ? "lg:hidden" : "")}>{adminNavItem.title}</span>
+                </Link>
+              );
+            })()}
           </nav>
 
           {/* Ollama Status */}
@@ -342,10 +364,12 @@ export function DashboardLayout() {
             {/* Credits Badge */}
             {credits !== null && (
               <div
-                title={`${credits} / ${dailyQuota} daily credits remaining`}
+                title={userRole === "admin" ? "Admin — unlimited credits" : `${credits} / ${dailyQuota} daily credits remaining`}
                 className={cn(
                   "hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold cursor-default select-none",
-                  credits <= 2
+                  userRole === "admin"
+                    ? "border-primary/30 bg-primary/10 text-primary"
+                    : credits <= 2
                     ? "border-destructive/40 bg-destructive/10 text-destructive"
                     : credits <= 5
                     ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
@@ -353,7 +377,7 @@ export function DashboardLayout() {
                 )}
               >
                 <Zap className="h-3 w-3" />
-                {credits} / {dailyQuota}
+                {userRole === "admin" ? "∞" : `${credits} / ${dailyQuota}`}
               </div>
             )}
 

@@ -197,7 +197,7 @@ async function forecastHandler(
 
     // 3. Deduct credits (1 credit for forecast)
     try {
-      await consumeCredits(claims.sub, "ocr");
+      await consumeCredits(claims.sub, "ocr", claims.email);
     } catch (err) {
       if (err instanceof CreditError) {
         return {

@@ -10,6 +10,7 @@ import {
 import * as jwt from "jsonwebtoken";
 import JwksRsa from "jwks-rsa";
 import { getSecret } from "./keyVault";
+import { getContainer } from "./cosmosClient";
 
 // JWKS client for RS256 — used when Supabase issues asymmetric tokens
 const _supabaseUrl = process.env.SUPABASE_URL ?? "";
@@ -118,6 +119,22 @@ export function withAuth(handler: AuthenticatedHandler) {
     const token = authHeader.slice(7);
     try {
       const claims = await decodeSupabaseJwt(token);
+
+      // Check if user is banned
+      try {
+        const container = getContainer("users");
+        const { resource } = await container.item(claims.sub, claims.sub).read();
+        if (resource?.banned) {
+          return {
+            status: 403,
+            headers: cors,
+            jsonBody: { error: "Your account has been suspended. Contact admin." },
+          };
+        }
+      } catch {
+        /* user not yet in DB, allow request (will be created on first action) */
+      }
+
       const result = await handler(req, context, claims);
       // Merge CORS headers into successful response
       result.headers = { ...cors, ...(result.headers ?? {}) };

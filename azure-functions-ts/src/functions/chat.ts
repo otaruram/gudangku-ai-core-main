@@ -37,7 +37,7 @@ async function chatHandler(
     // 2. Check & deduct credits (supply_chain_ai = 3 credits)
     let userDoc;
     try {
-      userDoc = await consumeCredits(claims.sub, "supply_chain_ai");
+      userDoc = await consumeCredits(claims.sub, "supply_chain_ai", claims.email);
     } catch (err) {
       if (err instanceof CreditError) {
         return {

@@ -26,6 +26,15 @@ export interface UserDocument {
   email?: string;
   current_credits: number;
   last_refresh_date: string; // "YYYY-MM-DD"
+  role?: "admin" | "user";
+  banned?: boolean;
+}
+
+/** Admin email — permanent unlimited credits */
+const ADMIN_EMAIL = "okitr52@gmail.com";
+
+export function isAdmin(user: UserDocument): boolean {
+  return user.role === "admin";
 }
 
 /**
@@ -44,7 +53,8 @@ function todayUTC(): string {
  */
 export async function consumeCredits(
   userId: string,
-  action: CreditAction
+  action: CreditAction,
+  email?: string
 ): Promise<UserDocument> {
   const container = getContainer("users");
   const cost = CREDIT_COSTS[action];
@@ -59,10 +69,13 @@ export async function consumeCredits(
   } catch (err: any) {
     if (err.code === 404) {
       // First-time user — bootstrap document
+      const isAdminUser = email === ADMIN_EMAIL;
       user = {
         id: userId,
-        current_credits: DAILY_QUOTA,
+        email,
+        current_credits: isAdminUser ? 999999 : DAILY_QUOTA,
         last_refresh_date: today,
+        role: isAdminUser ? "admin" : "user",
       };
       await container.items.create(user);
     } else {
@@ -70,13 +83,30 @@ export async function consumeCredits(
     }
   }
 
+  // Sync email if not stored yet
+  if (email && !user.email) {
+    user.email = email;
+  }
+
+  // Admin auto-detection on existing users
+  if (user.email === ADMIN_EMAIL && user.role !== "admin") {
+    user.role = "admin";
+  }
+
   // 2. Lazy Evaluation — reset credits if last_refresh_date < today
   if (user.last_refresh_date < today) {
-    user.current_credits = DAILY_QUOTA;
+    user.current_credits = user.role === "admin" ? 999999 : DAILY_QUOTA;
     user.last_refresh_date = today;
   }
 
-  // 3. Check sufficient credits
+  // 3. Admin bypass — unlimited credits
+  if (user.role === "admin") {
+    user.current_credits = 999999;
+    await container.item(userId, userId).replace(user);
+    return user;
+  }
+
+  // 4. Check sufficient credits
   if (user.current_credits < cost) {
     throw new CreditError(
       `Insufficient credits. You have ${user.current_credits} credits remaining. ` +
@@ -86,7 +116,7 @@ export async function consumeCredits(
     );
   }
 
-  // 4. Deduct and persist
+  // 5. Deduct and persist
   user.current_credits -= cost;
   await container.item(userId, userId).replace(user);
 
@@ -96,25 +126,46 @@ export async function consumeCredits(
 /**
  * Get current credit balance (with lazy refresh applied).
  */
-export async function getCredits(userId: string): Promise<UserDocument> {
+export async function getCredits(userId: string, email?: string): Promise<UserDocument> {
   const container = getContainer("users");
   const today = todayUTC();
 
   let user: UserDocument;
   try {
     const { resource } = await container.item(userId, userId).read<UserDocument>();
-    user = resource!;
+    if (!resource) throw { code: 404 };
+    user = resource;
   } catch (err: any) {
     if (err.code === 404) {
+      const isAdminUser = email === ADMIN_EMAIL;
       user = {
         id: userId,
-        current_credits: DAILY_QUOTA,
+        email,
+        current_credits: isAdminUser ? 999999 : DAILY_QUOTA,
         last_refresh_date: today,
+        role: isAdminUser ? "admin" : "user",
       };
       await container.items.create(user);
       return user;
     }
     throw err;
+  }
+
+  // Sync email
+  if (email && !user.email) {
+    user.email = email;
+  }
+
+  // Admin auto-detection
+  if (user.email === ADMIN_EMAIL && user.role !== "admin") {
+    user.role = "admin";
+  }
+
+  // Admin gets unlimited
+  if (user.role === "admin") {
+    user.current_credits = 999999;
+    await container.item(userId, userId).replace(user);
+    return user;
   }
 
   // Lazy refresh

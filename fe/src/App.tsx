@@ -15,6 +15,7 @@ import Forecaster from "./pages/dashboard/Forecaster";
 import DocAssistant from "./pages/dashboard/DocAssistant";
 import History from "./pages/dashboard/History";
 import UploadCSV from "./pages/dashboard/UploadCSV";
+import AdminPanel from "./pages/dashboard/AdminPanel";
 import NotFound from "./pages/NotFound";
 
 // Auth
@@ -42,6 +43,7 @@ const App = () => (
                     <Route path="forecaster" element={<Forecaster />} />
                     <Route path="assistant" element={<DocAssistant />} />
                     <Route path="history" element={<History />} />
+                    <Route path="admin" element={<AdminPanel />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />
