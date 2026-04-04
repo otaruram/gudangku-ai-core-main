@@ -13,6 +13,7 @@ import {
   Bell,
   X,
   Upload,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
@@ -36,6 +37,7 @@ const navItems = [
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/config";
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -83,6 +85,8 @@ export function DashboardLayout() {
   */
   const [showCleanup, setShowCleanup] = useState(false);
   const [daysUntilCleanup, setDaysUntilCleanup] = useState<number>(0);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [dailyQuota, setDailyQuota] = useState<number>(10);
 
   useEffect(() => {
     const calculateCleanupStatus = () => {
@@ -113,6 +117,24 @@ export function DashboardLayout() {
   }, []);
 
 
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const authHeaders = await getAuthHeaders();
+        if (!authHeaders.Authorization) return;
+        const res = await fetch("/api/credits", { headers: authHeaders });
+        if (res.ok) {
+          const data = await res.json();
+          setCredits(data.current_credits);
+          setDailyQuota(data.daily_quota ?? 10);
+        }
+      } catch {
+        /* ignore, credits display is non-critical */
+      }
+    };
+    fetchCredits();
+  }, [user]);
 
   const handleCleanup = () => {
     if (confirm("Run Monthly Cleanup?\n\nPolicy: Local data older than 1 year will be deleted.\nThis will refresh the application.")) {
@@ -316,6 +338,24 @@ export function DashboardLayout() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Credits Badge */}
+            {credits !== null && (
+              <div
+                title={`${credits} / ${dailyQuota} daily credits remaining`}
+                className={cn(
+                  "hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold cursor-default select-none",
+                  credits <= 2
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : credits <= 5
+                    ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "border-primary/30 bg-primary/10 text-primary"
+                )}
+              >
+                <Zap className="h-3 w-3" />
+                {credits} / {dailyQuota}
+              </div>
+            )}
 
             {/* Profile Dropdown */}
             <DropdownMenu>

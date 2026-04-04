@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, Download, FileSpreadsheet, CheckCircle2, ArrowRight } from "lucide-react";
+import { Upload, Download, FileSpreadsheet, CheckCircle2, ArrowRight, AlertCircle } from "lucide-react";
 import { UploadZone } from "@/components/features/forecast/UploadZone";
 import { useForecast } from "@/context/ForecastContext";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ export default function UploadCSV() {
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const hasData = data.hasData;
   const csvFileName = localStorage.getItem("csvFileName");
@@ -52,6 +53,7 @@ export default function UploadCSV() {
   const handleFileProcess = async (file: File) => {
     setLoading(true);
     setUploadSuccess(false);
+    setUploadError(null);
     try {
       const csvText = await file.text();
       const csvLines = csvText.split("\n");
@@ -75,11 +77,18 @@ export default function UploadCSV() {
 
       if (!response.ok) {
         let errMsg = "Upload failed";
+        let errDetail = "";
         try {
           const errorData = await response.json();
           errMsg = errorData.error || errorData.detail || errMsg;
+          errDetail = errorData.detail || "";
         } catch {
           /* ignore */
+        }
+        if (response.status === 401) {
+          throw new Error(
+            `AUTH_FAIL:${errDetail || errMsg}`
+          );
         }
         throw new Error(errMsg);
       }
@@ -106,7 +115,15 @@ export default function UploadCSV() {
       setUploadSuccess(true);
     } catch (error: any) {
       console.error("Upload Error:", error);
-      alert(`Failed: ${error.message}`);
+      const msg: string = error.message || "";
+      if (msg.startsWith("AUTH_FAIL:")) {
+        const detail = msg.replace("AUTH_FAIL:", "");
+        setUploadError(
+          `Authentication failed (${detail}). Your session may have expired — please log out and log back in. If the issue persists, the server JWT secret may need to be updated in Azure Portal.`
+        );
+      } else {
+        setUploadError(msg || "An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -118,11 +135,29 @@ export default function UploadCSV() {
       localStorage.removeItem("csvContext");
       localStorage.removeItem("csvFileName");
       setUploadSuccess(false);
+      setUploadError(null);
     }
   };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Error Banner */}
+      {uploadError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold text-destructive text-sm">Upload Failed</p>
+            <p className="text-sm text-destructive/80 mt-1">{uploadError}</p>
+          </div>
+          <button
+            onClick={() => setUploadError(null)}
+            className="text-destructive/60 hover:text-destructive text-xs ml-2"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-end border-b pb-4">
         <div>
