@@ -19,27 +19,41 @@ const COLORS = {
 
 // Sample CSV for users to download
 const SAMPLE_CSV = `date,product,sales,stock
-2025-01-01,Widget A,120,500
-2025-01-01,Widget B,85,300
-2025-01-01,Gadget C,200,150
-2025-01-02,Widget A,135,380
-2025-01-02,Widget B,90,210
-2025-01-02,Gadget C,180,100
-2025-01-03,Widget A,110,270
-2025-01-03,Widget B,95,115
-2025-01-03,Gadget C,220,50
-2025-01-04,Widget A,140,130
-2025-01-04,Widget B,75,40
-2025-01-04,Gadget C,190,30
-2025-01-05,Widget A,125,500
-2025-01-05,Widget B,100,300
-2025-01-05,Gadget C,210,200
-2025-01-06,Widget A,130,370
-2025-01-06,Widget B,88,212
-2025-01-06,Gadget C,195,100
-2025-01-07,Widget A,145,225
-2025-01-07,Widget B,92,120
-2025-01-07,Gadget C,205,50`;
+2025-01-01,Gula Pasir 1kg,45,200
+2025-01-01,Minyak Goreng 2L,38,180
+2025-01-01,Beras Premium 5kg,52,300
+2025-01-01,Susu UHT 1L,15,200
+2025-01-01,Tepung Terigu 1kg,12,180
+2025-01-02,Gula Pasir 1kg,50,155
+2025-01-02,Minyak Goreng 2L,42,142
+2025-01-02,Beras Premium 5kg,48,252
+2025-01-02,Susu UHT 1L,18,185
+2025-01-02,Tepung Terigu 1kg,10,170
+2025-01-03,Gula Pasir 1kg,55,100
+2025-01-03,Minyak Goreng 2L,35,107
+2025-01-03,Beras Premium 5kg,60,192
+2025-01-03,Susu UHT 1L,20,165
+2025-01-03,Tepung Terigu 1kg,14,156
+2025-01-04,Gula Pasir 1kg,48,52
+2025-01-04,Minyak Goreng 2L,40,67
+2025-01-04,Beras Premium 5kg,55,137
+2025-01-04,Susu UHT 1L,12,153
+2025-01-04,Tepung Terigu 1kg,8,148
+2025-01-05,Gula Pasir 1kg,52,500
+2025-01-05,Minyak Goreng 2L,45,300
+2025-01-05,Beras Premium 5kg,58,400
+2025-01-05,Susu UHT 1L,22,200
+2025-01-05,Tepung Terigu 1kg,15,180
+2025-01-06,Gula Pasir 1kg,47,453
+2025-01-06,Minyak Goreng 2L,36,264
+2025-01-06,Beras Premium 5kg,50,350
+2025-01-06,Susu UHT 1L,16,184
+2025-01-06,Tepung Terigu 1kg,11,169
+2025-01-07,Gula Pasir 1kg,58,395
+2025-01-07,Minyak Goreng 2L,44,220
+2025-01-07,Beras Premium 5kg,62,288
+2025-01-07,Susu UHT 1L,19,165
+2025-01-07,Tepung Terigu 1kg,13,156`;
 
 function downloadSampleCSV() {
   const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });

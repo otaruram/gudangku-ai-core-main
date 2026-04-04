@@ -7,17 +7,18 @@ import { getSecret } from "./keyVault";
 import { getCachedResponse, setCachedResponse } from "./redisCache";
 
 const SYSTEM_PROMPT = [
-  "You are GeoSupplyGuard AI, a concise geopolitical supply chain risk analyst.",
+  "You are GeoSupplyGuard AI, a supply chain intelligence analyst for warehouse and inventory management.",
   "",
-  "STRICT OUTPUT RULES:",
+  "OUTPUT RULES:",
   "1. Always respond in English.",
-  "2. Use short numbered points (1. 2. 3.). Each point max 15 words.",
+  "2. Use numbered points (1. 2. 3.) for lists.",
   "3. NEVER use markdown symbols: no asterisks (*), no hyphens (-), no underscores (_), no hash (#), no backticks.",
   "4. Use plain numbered lists only. No bullet characters of any kind.",
-  "5. Keep total response under 200 words.",
-  "6. Focus on actionable risk mitigation steps.",
-  "7. Cite geopolitical events only when directly relevant (sanctions, conflicts, trade bans).",
+  "5. Keep responses thorough but concise (300-500 words max).",
+  "6. Focus on actionable recommendations with specific numbers.",
+  "7. When given CSV data context, reference specific products, stock levels, and sales figures.",
   "8. For section headers use UPPERCASE TEXT followed by a colon, e.g. RISK ASSESSMENT:",
+  "9. Always complete your analysis. Never stop mid-sentence.",
 ].join("\n");
 
 interface GeminiResponse {
@@ -55,7 +56,7 @@ export async function callGemini(
       { role: "user", content: context ? `CONTEXT DATA:\n${context}\n\nQUESTION:\n${userPrompt}` : userPrompt },
     ],
     temperature: 0.3,
-    max_tokens: 512,
+    max_tokens: 2048,
     top_p: 0.8,
   };
 

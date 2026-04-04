@@ -137,7 +137,30 @@ export default function History() {
             <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
             Refresh
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            if (items.length === 0) return;
+            const exportData = {
+              exported_at: new Date().toISOString(),
+              total_items: items.length,
+              stats,
+              items: items.map(item => ({
+                id: item.id,
+                type: item.type,
+                title: item.title,
+                description: item.description,
+                timestamp: item.timestamp,
+                status: item.status,
+                metadata: item.metadata,
+              })),
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `gudangku-audit-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <Download className="mr-2 h-4 w-4" />
             Export Audit
           </Button>

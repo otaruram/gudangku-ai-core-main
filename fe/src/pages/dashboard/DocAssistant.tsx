@@ -60,7 +60,7 @@ export default function DocAssistant() {
         </button>
       </div>
 
-      {/* Ollama Status Bar */}
+      {/* AI Status Bar */}
       <AIStatus />
 
       {/* Chat Container */}
