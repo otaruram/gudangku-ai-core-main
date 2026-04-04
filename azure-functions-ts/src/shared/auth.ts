@@ -35,13 +35,14 @@ export type AuthenticatedHandler = (
 ) => Promise<HttpResponseInit>;
 
 /**
- * Decode a Supabase-issued JWT — supports both HS256 and RS256.
+ * Decode a Supabase-issued JWT — supports HS256, RS256, and ES256.
  */
 async function decodeSupabaseJwt(token: string): Promise<UserClaims> {
   const header = jwt.decode(token, { complete: true })?.header as jwt.JwtHeader | undefined;
   const alg = header?.alg ?? "HS256";
 
-  if (alg === "RS256" && _jwksClient) {
+  // Asymmetric algorithms — verify via JWKS
+  if ((alg === "RS256" || alg === "ES256") && _jwksClient) {
     return new Promise((resolve, reject) => {
       const getKey = (hdr: jwt.JwtHeader, cb: jwt.SigningKeyCallback) => {
         _jwksClient!.getSigningKey(hdr.kid, (err, key) => {
@@ -52,7 +53,7 @@ async function decodeSupabaseJwt(token: string): Promise<UserClaims> {
       jwt.verify(
         token,
         getKey,
-        { algorithms: ["RS256"], audience: "authenticated" },
+        { algorithms: ["RS256", "ES256"], audience: "authenticated" },
         (err, decoded) => {
           if (err) reject(err);
           else resolve(decoded as UserClaims);
