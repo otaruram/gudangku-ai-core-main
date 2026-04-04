@@ -1,6 +1,6 @@
 /**
  * JWT authentication middleware for Azure Functions v4.
- * Supports Supabase Auth (HS256) and Azure AD / Entra ID (RS256).
+ * Supports Supabase Auth (HS256 and RS256 via JWKS).
  */
 import {
   HttpRequest,
@@ -8,7 +8,18 @@ import {
   InvocationContext,
 } from "@azure/functions";
 import * as jwt from "jsonwebtoken";
+import JwksRsa from "jwks-rsa";
 import { getSecret } from "./keyVault";
+
+// JWKS client for RS256 — used when Supabase issues asymmetric tokens
+const _supabaseUrl = process.env.SUPABASE_URL ?? "";
+const _jwksClient = _supabaseUrl
+  ? JwksRsa({
+      jwksUri: `${_supabaseUrl}/auth/v1/.well-known/jwks.json`,
+      cache: true,
+      cacheMaxAge: 600_000,
+    })
+  : null;
 
 export interface UserClaims {
   sub: string;
@@ -24,9 +35,33 @@ export type AuthenticatedHandler = (
 ) => Promise<HttpResponseInit>;
 
 /**
- * Decode a Supabase-issued JWT (HS256).
+ * Decode a Supabase-issued JWT — supports both HS256 and RS256.
  */
 async function decodeSupabaseJwt(token: string): Promise<UserClaims> {
+  const header = jwt.decode(token, { complete: true })?.header as jwt.JwtHeader | undefined;
+  const alg = header?.alg ?? "HS256";
+
+  if (alg === "RS256" && _jwksClient) {
+    return new Promise((resolve, reject) => {
+      const getKey = (hdr: jwt.JwtHeader, cb: jwt.SigningKeyCallback) => {
+        _jwksClient!.getSigningKey(hdr.kid, (err, key) => {
+          if (err) return cb(err);
+          cb(null, key!.getPublicKey());
+        });
+      };
+      jwt.verify(
+        token,
+        getKey,
+        { algorithms: ["RS256"], audience: "authenticated" },
+        (err, decoded) => {
+          if (err) reject(err);
+          else resolve(decoded as UserClaims);
+        }
+      );
+    });
+  }
+
+  // HS256 with shared secret
   const secret = await getSecret("SUPABASE-JWT-SECRET", "SUPABASE_JWT_SECRET");
   return jwt.verify(token, secret, {
     algorithms: ["HS256"],
