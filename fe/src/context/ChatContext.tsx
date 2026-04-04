@@ -76,29 +76,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             const { API_URL, getAuthHeaders } = await import("@/lib/config");
             const authHeaders = await getAuthHeaders();
 
-            // Include CSV context if available
-            const csvContext = localStorage.getItem('csvContext') || '';
-            const questionWithContext = csvContext
-                ? `[CSV DATA CONTEXT]\n${csvContext}\n\n[USER QUESTION]\n${input || "Please analyze this document."}`
-                : (input || "Please analyze this document.");
+            // Send user question only — CSV context is handled separately
+            const userQuestion = input || "Please analyze this document.";
 
-            let fetchOptions: RequestInit;
-            if (file) {
-                const formData = new FormData();
-                formData.append("question", questionWithContext);
-                formData.append("file", file);
-                fetchOptions = {
-                    method: "POST",
-                    headers: { ...authHeaders },
-                    body: formData,
-                };
-            } else {
-                fetchOptions = {
-                    method: "POST",
-                    headers: { ...authHeaders, "Content-Type": "application/json" },
-                    body: JSON.stringify({ question: questionWithContext }),
-                };
-            }
+            // Build question with CSV context for the API (but show clean question to user)
+            const csvContext = localStorage.getItem('csvContext') || '';
+            const apiQuestion = csvContext
+                ? `INVENTORY DATA:\n${csvContext}\n\nUSER REQUEST:\n${userQuestion}`
+                : userQuestion;
+
+            const fetchOptions: RequestInit = {
+                method: "POST",
+                headers: { ...authHeaders, "Content-Type": "application/json" },
+                body: JSON.stringify({ question: apiQuestion }),
+            };
 
             const response = await fetch(`${API_URL}/chat`, fetchOptions);
 

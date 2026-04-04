@@ -327,14 +327,58 @@ export default function History() {
               ) : (
                 // Forecast Detail View
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 bg-background border rounded-lg">
                     <span className="text-sm font-medium">Filename</span>
-                    <span className="text-sm text-muted-foreground">{detailData.filename}</span>
+                    <span className="text-sm text-muted-foreground font-mono">{detailData.filename}</span>
                   </div>
-                  {/* We could show raw data table here or summary */}
-                  <div className="p-4 bg-secondary rounded text-center text-sm text-muted-foreground">
-                    Full forecast data available. Click Replay to visualize.
-                  </div>
+
+                  {/* Best Sellers */}
+                  {detailData.plotData?.best_sellers && Object.keys(detailData.plotData.best_sellers).length > 0 && (
+                    <div className="p-3 bg-background border rounded-lg">
+                      <p className="font-semibold text-xs text-muted-foreground mb-2">Top Sellers</p>
+                      <div className="space-y-1.5">
+                        {Object.entries(detailData.plotData.best_sellers).map(([name, qty]: [string, any], i: number) => (
+                          <div key={i} className="flex justify-between text-sm">
+                            <span>{name}</span>
+                            <span className="font-mono text-muted-foreground">{qty} sold</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stock Alerts */}
+                  {detailData.plotData?.stock_alerts && detailData.plotData.stock_alerts.length > 0 && (
+                    <div className="p-3 bg-background border rounded-lg">
+                      <p className="font-semibold text-xs text-muted-foreground mb-2">Stock Alerts</p>
+                      <div className="space-y-2">
+                        {detailData.plotData.stock_alerts.map((alert: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-sm">
+                            <div>
+                              <span className="font-medium">{alert.product}</span>
+                              <span className="text-xs text-muted-foreground ml-2">Stock: {alert.current_stock}</span>
+                            </div>
+                            <span className={cn(
+                              "text-xs font-medium px-2 py-0.5 rounded-full",
+                              alert.status === "CRITICAL" && "bg-red-100 text-red-800",
+                              alert.status === "WARNING" && "bg-yellow-100 text-yellow-800",
+                              alert.status === "SAFE" && "bg-green-100 text-green-800",
+                              alert.status === "STOCKOUT" && "bg-red-200 text-red-900",
+                            )}>
+                              {alert.status} · {alert.days_left}d left
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Forecast Chart Count */}
+                  {detailData.plotData?.chart && (
+                    <div className="p-3 bg-background border rounded-lg text-sm text-muted-foreground">
+                      {detailData.plotData.chart.length} days of forecast data available. Click <strong>Replay</strong> to visualize the chart.
+                    </div>
+                  )}
                 </div>
               )
             ) : (

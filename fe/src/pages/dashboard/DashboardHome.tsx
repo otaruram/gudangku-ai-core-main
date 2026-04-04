@@ -26,7 +26,19 @@ export default function DashboardHome() {
   const allActions = [...criticalActions, ...warningActions];
 
   const handleAskAI = (alert: any) => {
-    const prompt = `Analyze reorder strategy for "${alert.product}". Current stock: ${alert.current_stock} units. Average daily sales requires restock at ${alert.rop} units (ROP). Estimated to run out in ${alert.days_left} days. Status: ${alert.status}. What supplier contract terms should I negotiate? What is the optimal order quantity and timing?`;
+    const prompt = [
+      `Product: ${alert.product}`,
+      `Current Stock: ${alert.current_stock} units`,
+      `Reorder Point (ROP): ${alert.rop} units`,
+      `Days Until Stockout: ${alert.days_left} days`,
+      `Status: ${alert.status}`,
+      ``,
+      `Based on this data, please provide:`,
+      `1. Optimal reorder quantity (EOQ)`,
+      `2. Recommended order timing`,
+      `3. Supplier contract negotiation tips`,
+      `4. Safety stock recommendation`,
+    ].join('\n');
     localStorage.setItem('assistant_prompt', prompt);
     navigate('/dashboard/assistant');
   };

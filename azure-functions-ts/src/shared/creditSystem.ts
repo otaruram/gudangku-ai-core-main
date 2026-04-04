@@ -11,6 +11,7 @@
  *   Supply Chain AI  = 3 credits
  */
 import { getContainer } from "./cosmosClient";
+import { sendWelcomeEmail } from "./emailService";
 
 const DAILY_QUOTA = 10;
 
@@ -78,6 +79,10 @@ export async function consumeCredits(
         role: isAdminUser ? "admin" : "user",
       };
       await container.items.create(user);
+      // Send welcome email for new users
+      if (email) {
+        sendWelcomeEmail(email).catch(() => {});
+      }
     } else {
       throw err;
     }
@@ -146,6 +151,10 @@ export async function getCredits(userId: string, email?: string): Promise<UserDo
         role: isAdminUser ? "admin" : "user",
       };
       await container.items.create(user);
+      // Send welcome email for new users
+      if (email) {
+        sendWelcomeEmail(email).catch(() => {});
+      }
       return user;
     }
     throw err;

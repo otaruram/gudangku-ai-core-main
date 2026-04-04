@@ -28,8 +28,8 @@ export function ChatInput({ input, setInput, handleSend, isTyping }: ChatInputPr
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Ask about your inventory, supply chain, or warehouse data..."
-                    rows={1}
-                    className="flex-1 resize-none border-0 bg-transparent py-2 text-sm placeholder:text-muted-foreground focus:outline-none"
+                    rows={3}
+                    className="flex-1 resize-none border-0 bg-transparent py-2 text-sm placeholder:text-muted-foreground focus:outline-none min-h-[60px]"
                 />
                 <Button
                     onClick={onSend}

@@ -90,6 +90,12 @@ export function DashboardLayout() {
   const [credits, setCredits] = useState<number | null>(null);
   const [dailyQuota, setDailyQuota] = useState<number>(10);
   const [userRole, setUserRole] = useState<string>("user");
+  const [notificationsOn, setNotificationsOn] = useState(() => {
+    return localStorage.getItem('notificationsOn') !== 'false';
+  });
+  const hasNewUpdates = notificationsOn;
+  const [notificationsOn, setNotificationsOn] = useState(() => localStorage.getItem('notificationsOn') !== 'false');
+  const hasNewUpdates = notificationsOn;
 
   useEffect(() => {
     const calculateCleanupStatus = () => {
@@ -268,7 +274,7 @@ export function DashboardLayout() {
             })()}
           </nav>
 
-          {/* Ollama Status */}
+          {/* AI Status */}
           <div className={cn(
             "border-t border-sidebar-border p-4",
             collapsed ? "lg:hidden" : ""
@@ -279,8 +285,8 @@ export function DashboardLayout() {
                 <div className="absolute inset-0 h-2.5 w-2.5 animate-pulse-ring rounded-full bg-accent" />
               </div>
               <div>
-                <p className="text-xs font-medium text-sidebar-foreground">Local Brain Active</p>
-                <p className="text-[10px] text-sidebar-muted">Data safe, offline</p>
+                <p className="text-xs font-medium text-sidebar-foreground">Gemini 2.5 Flash</p>
+                <p className="text-[10px] text-sidebar-muted">Cloud AI • Online</p>
               </div>
             </div>
           </div>
@@ -319,43 +325,85 @@ export function DashboardLayout() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Notifications with Clear Data */}
+            {/* Notification Toggle */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
-                  {showCleanup && (
+                  {(showCleanup || hasNewUpdates) && (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <div className="p-2 border-b text-xs font-semibold text-muted-foreground">
-                  System Notifications
+              <DropdownMenuContent align="end" className="w-80">
+                <div className="p-2 border-b flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Notifications</span>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-[10px] text-muted-foreground">Updates</span>
+                    <button
+                      onClick={(e) => { e.preventDefault(); setNotificationsOn(!notificationsOn); localStorage.setItem('notificationsOn', (!notificationsOn).toString()); }}
+                      className={cn(
+                        "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
+                        notificationsOn ? "bg-primary" : "bg-muted"
+                      )}
+                    >
+                      <span className={cn(
+                        "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform",
+                        notificationsOn ? "translate-x-4" : "translate-x-1"
+                      )} />
+                    </button>
+                  </label>
                 </div>
+                {notificationsOn && (
+                  <>
+                    <DropdownMenuItem disabled className="opacity-100">
+                      <div className="flex flex-col gap-1 w-full">
+                        <span className="font-medium flex items-center gap-2 text-primary text-xs">
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          v2.0 — Admin Panel & Smart Actions
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Admin user management, Ask AI from dashboard, Tokopedia order links, real deadstock analysis.
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled className="opacity-100">
+                      <div className="flex flex-col gap-1 w-full">
+                        <span className="font-medium flex items-center gap-2 text-primary text-xs">
+                          <span className="w-2 h-2 rounded-full bg-primary" />
+                          v1.5 — AI Upgrade
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Gemini 2.5 Flash integration, credit system, export audit, CSV context-aware answers.
+                        </span>
+                      </div>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {!notificationsOn && (
+                  <DropdownMenuItem disabled>
+                    <span className="text-xs text-muted-foreground">Notifications are off. Toggle on to see updates.</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
                 {showCleanup ? (
                   <DropdownMenuItem className="cursor-pointer bg-destructive/10" onClick={handleCleanup}>
                     <div className="flex flex-col gap-1 w-full">
-                      <span className="font-medium flex items-center gap-2 text-destructive">
+                      <span className="font-medium flex items-center gap-2 text-destructive text-xs">
                         <span className="w-2 h-2 rounded-full bg-destructive" />
-                        🔔 Monthly Maintenance Required
+                        Monthly Maintenance Required
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        It's time to clean up old data. Click to run maintenance.
+                      <span className="text-[10px] text-muted-foreground">
+                        Click to clean up old data.
                       </span>
                     </div>
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem disabled>
-                    <div className="flex flex-col gap-1 w-full">
-                      <span className="font-medium flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500" />
-                        ✅ System Clean
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Next maintenance: <strong>{daysUntilCleanup} days left</strong>
-                      </span>
-                    </div>
+                    <span className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      System clean • Next maintenance: {daysUntilCleanup}d
+                    </span>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
