@@ -69,8 +69,28 @@ async function decodeSupabaseJwt(token: string): Promise<UserClaims> {
   }) as UserClaims;
 }
 
+const ALLOWED_ORIGINS = (
+  process.env.ALLOWED_ORIGINS ??
+  "http://localhost:5173,https://gudangku.space,https://www.gudangku.space,https://gudangku-steel.vercel.app"
+).split(",").map(o => o.trim());
+
 /**
- * Higher-order function that wraps a handler with JWT validation.
+ * Return CORS headers for the given request origin.
+ * Falls back to the first allowed origin if the request origin isn't in the list.
+ */
+export function corsHeaders(req: HttpRequest): Record<string, string> {
+  const origin = req.headers.get("origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400",
+  };
+}
+
+/**
+ * Higher-order function that wraps a handler with JWT validation + CORS headers.
  * Returns 401 on failure, injects UserClaims on success.
  */
 export function withAuth(handler: AuthenticatedHandler) {
@@ -78,10 +98,18 @@ export function withAuth(handler: AuthenticatedHandler) {
     req: HttpRequest,
     context: InvocationContext
   ): Promise<HttpResponseInit> => {
+    const cors = corsHeaders(req);
+
+    // Handle CORS preflight
+    if (req.method === "OPTIONS") {
+      return { status: 204, headers: cors };
+    }
+
     const authHeader = req.headers.get("authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) {
       return {
         status: 401,
+        headers: cors,
         jsonBody: { error: "Missing or malformed Authorization header" },
       };
     }
@@ -89,11 +117,15 @@ export function withAuth(handler: AuthenticatedHandler) {
     const token = authHeader.slice(7);
     try {
       const claims = await decodeSupabaseJwt(token);
-      return handler(req, context, claims);
+      const result = await handler(req, context, claims);
+      // Merge CORS headers into successful response
+      result.headers = { ...cors, ...(result.headers ?? {}) };
+      return result;
     } catch (err: any) {
       context.warn(`Auth failed: ${err.message}`);
       return {
         status: 401,
+        headers: cors,
         jsonBody: { error: "Unauthorized", detail: err.message },
       };
     }
