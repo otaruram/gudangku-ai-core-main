@@ -2,7 +2,8 @@ import { useForecast } from "@/context/ForecastContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { 
   TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, 
-  ArrowRight, Zap, Package, Calendar, Upload 
+  ArrowRight, Zap, Package, Calendar, Upload, MessageSquare,
+  ExternalLink, Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,17 +15,25 @@ export default function DashboardHome() {
   const { forecastChart, bestSellers, stockAlerts, hasData } = data;
 
   const winners = bestSellers.slice(0, 3);
-  const deadstockPlaceholder = [
-    { name: "Binder Clips (Old)", stock: 850, days_dormant: 90 },
-    { name: "CD-R Spindle", stock: 120, days_dormant: 120 },
-  ];
+
+  // Deadstock = products with lowest sales from actual CSV data
+  const deadstock = bestSellers.length > 0
+    ? [...bestSellers].sort((a: any, b: any) => a.qty - b.qty).slice(0, 3)
+    : [];
 
   const criticalActions = stockAlerts.filter((a: any) => a.status === "CRITICAL");
   const warningActions = stockAlerts.filter((a: any) => a.status === "WARNING");
   const allActions = [...criticalActions, ...warningActions];
 
-  const handleRestock = (productName: string) => {
-    alert(`Initiating Automated Restock for: ${productName}. Draft email created.`);
+  const handleAskAI = (alert: any) => {
+    const prompt = `Analyze reorder strategy for "${alert.product}". Current stock: ${alert.current_stock} units. Average daily sales requires restock at ${alert.rop} units (ROP). Estimated to run out in ${alert.days_left} days. Status: ${alert.status}. What supplier contract terms should I negotiate? What is the optimal order quantity and timing?`;
+    localStorage.setItem('assistant_prompt', prompt);
+    navigate('/dashboard/assistant');
+  };
+
+  const handleOrderNow = (productName: string) => {
+    const query = encodeURIComponent(productName);
+    window.open(`https://www.tokopedia.com/search?q=${query}`, '_blank', 'noopener,noreferrer');
   };
 
   const csvFileName = localStorage.getItem('csvFileName');
@@ -78,27 +87,39 @@ export default function DashboardHome() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* ... Winner Card ... */}
 
-            {/* Deadstock Card */}
+            {/* Deadstock Card — from actual CSV data */}
             <div className="rounded-xl border bg-card p-6 shadow-sm relative group">
-              <h3 className="font-semibold text-lg mb-4">Deadstock / Losers</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-lg">Deadstock / Losers</h3>
+                <div className="group/tip relative">
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                  <div className="absolute right-0 top-6 w-48 bg-popover text-popover-foreground text-xs p-2 rounded-md shadow-lg border hidden group-hover/tip:block z-10">
+                    Products with the lowest total sales from your CSV data.
+                  </div>
+                </div>
+              </div>
               <div className="space-y-4">
-                {deadstockPlaceholder.map((item, i) => (
+                {deadstock.length > 0 ? deadstock.map((item: any, i: number) => (
                   <div key={i} className="flex justify-between items-center pb-2 border-b border-border/50">
                     <p className="text-sm font-medium">{item.name}</p>
-                    <p className="font-bold">{item.stock}</p>
+                    <p className="text-xs text-muted-foreground">{item.qty} sold</p>
                   </div>
-                ))}
-                <Button
-                  variant="outline"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    const prompt = `Need a clearance strategy for: ${deadstockPlaceholder.map(i => i.name).join(', ')}`;
-                    localStorage.setItem('assistant_prompt', prompt);
-                    navigate('/dashboard/assistant'); // FIX: Use navigate
-                  }}
-                >
-                  Create Clearance Strategy
-                </Button>
+                )) : (
+                  <p className="text-sm text-muted-foreground">No product data in CSV.</p>
+                )}
+                {deadstock.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="w-full mt-2"
+                    onClick={() => {
+                      const prompt = `Need a clearance strategy for slow-moving products: ${deadstock.map((i: any) => `${i.name} (${i.qty} sold)`).join(', ')}. Suggest discount strategies, bundle ideas, or liquidation approaches.`;
+                      localStorage.setItem('assistant_prompt', prompt);
+                      navigate('/dashboard/assistant');
+                    }}
+                  >
+                    Create Clearance Strategy
+                  </Button>
+                )}
               </div>
             </div>
             
@@ -109,23 +130,48 @@ export default function DashboardHome() {
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="p-6 bg-secondary/30 border-b">
-              <h2 className="text-xl font-bold flex items-center gap-2">Action List</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold flex items-center gap-2">Action List</h2>
+                <div className="group/tip relative">
+                  <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                  <div className="absolute right-0 top-6 w-56 bg-popover text-popover-foreground text-xs p-2 rounded-md shadow-lg border hidden group-hover/tip:block z-10">
+                    Products that need restocking based on stock velocity from your CSV. "Ask AI" sends context to Doc Assistant. "Order" searches Tokopedia.
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="divide-y divide-border">
-              {allActions.map((alert: any, i: number) => (
-                <div key={i} className="p-4 flex flex-col sm:flex-row justify-between items-center">
-                  <p className="font-bold">{alert.product}</p>
+              {allActions.length > 0 ? allActions.map((alert: any, i: number) => (
+                <div key={i} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div>
+                    <p className="font-bold">{alert.product}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Stock: {alert.current_stock} · {alert.status === 'CRITICAL' ? `Runs out in ${alert.days_left}d` : `${alert.days_left} days left`}
+                    </p>
+                  </div>
                   <div className="flex gap-3">
                     <Button 
                       variant="outline" 
-                      onClick={() => navigate('/dashboard/assistant')} // FIX: Use navigate
+                      size="sm"
+                      onClick={() => handleAskAI(alert)}
                     >
-                      Check Contract
+                      <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
+                      Ask AI
                     </Button>
-                    <Button onClick={() => handleRestock(alert.product)}>Order Now</Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => handleOrderNow(alert.product)}
+                    >
+                      <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                      Order
+                    </Button>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                  No critical/warning stock alerts. All products are safe.
+                </div>
+              )}
             </div>
           </div>
         </>

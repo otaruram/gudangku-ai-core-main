@@ -1,7 +1,7 @@
 
 
 import { useState } from "react";
-import { Info, ArrowUpRight, TrendingUp, AlertTriangle, CheckCircle2, Download } from "lucide-react";
+import { Info, ArrowUpRight, TrendingUp, AlertTriangle, CheckCircle2, Download, HelpCircle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 import { UploadZone } from "@/components/features/forecast/UploadZone";
 import { useForecast } from "@/context/ForecastContext";
@@ -202,6 +202,19 @@ export default function Forecaster() {
 
       {/* DASHBOARD (Result State) */}
       {hasData && (
+        <>
+        {/* Data Source Banner */}
+        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+          <Info className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+          <div>
+            <p className="font-medium text-blue-800">Analysis Based on Your CSV Data</p>
+            <p className="text-blue-600 text-xs mt-1">
+              All forecasts, rankings, and stock alerts are calculated from the data you uploaded — not from external market sources. 
+              Top Performers = total sales per product. Stock Velocity = current stock ÷ avg daily sales. Market Trajectory = moving average + linear trend projection.
+            </p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ZONE 1: WINNERS & LOSERS (Top Left) */}
@@ -210,6 +223,12 @@ export default function Forecaster() {
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-emerald-500" />
                 <h2 className="font-bold text-lg">Top Performers</h2>
+                <div className="group/tip relative ml-auto">
+                  <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                  <div className="absolute right-0 top-6 w-52 bg-popover text-popover-foreground text-xs p-2 rounded-md shadow-lg border hidden group-hover/tip:block z-10">
+                    Ranked by total sales volume from your CSV data. Top 3 highlighted in green (Pareto principle — top products driving most revenue).
+                  </div>
+                </div>
               </div>
               {bestSellers.length > 0 ? (
                 <div className="h-[250px]">
@@ -246,6 +265,12 @@ export default function Forecaster() {
                   <div className="flex items-center gap-2 text-emerald-400 mt-1">
                     <ArrowUpRight className="w-4 h-4" />
                     <span className="text-sm font-medium">Predicted Growth Trend</span>
+                    <div className="group/tip relative">
+                      <HelpCircle className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                      <div className="absolute left-0 top-5 w-56 bg-gray-800 text-gray-200 text-xs p-2 rounded-md shadow-lg border border-gray-600 hidden group-hover/tip:block z-10">
+                        Forecast projected from YOUR CSV data using moving average + linear trend analysis. Not real-time market data.
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -296,12 +321,20 @@ export default function Forecaster() {
                   <AlertTriangle className="w-5 h-5" />
                   Stock Velocity Analysis
                 </h2>
-                <button
-                  onClick={() => setData({ hasData: false })}
-                  className="text-sm font-medium hover:underline"
-                >
-                  Reset Analysis
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="group/tip relative">
+                    <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    <div className="absolute right-0 top-6 w-60 bg-popover text-popover-foreground text-xs p-2 rounded-md shadow-lg border hidden group-hover/tip:block z-10">
+                      "Run Out in Xd" = current stock ÷ average daily sales from CSV. CRITICAL: stock below reorder point (avg × 3 × 1.5). WARNING: less than 7 days of stock left. SAFE: sufficient stock.
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setData({ hasData: false })}
+                    className="text-sm font-medium hover:underline"
+                  >
+                    Reset Analysis
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -339,6 +372,7 @@ export default function Forecaster() {
           </div>
 
         </div>
+        </>
       )}
     </div>
   );
