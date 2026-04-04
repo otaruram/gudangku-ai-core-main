@@ -1,5 +1,5 @@
 /**
- * Email Service — Welcome email for new users via Sumopod SMTP.
+ * Email Service — Premium welcome email for new users via Sumopod SMTP.
  */
 import * as nodemailer from "nodemailer";
 import { getSecret } from "./keyVault";
@@ -25,7 +25,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
 }
 
 /**
- * Send welcome email to a new user.
+ * Send premium welcome email to a new user.
  */
 export async function sendWelcomeEmail(email: string, name?: string): Promise<void> {
   try {
@@ -35,109 +35,219 @@ export async function sendWelcomeEmail(email: string, name?: string): Promise<vo
     await transporter.sendMail({
       from: '"Gudangku" <noreply@gudangku.space>',
       to: email,
-      subject: "Welcome to Gudangku — Your Supply Chain Intelligence Hub",
-      html: `
-<!DOCTYPE html>
-<html>
+      subject: "Welcome to Gudangku \u{1F4E6} Your AI Warehouse Intelligence",
+      html: buildWelcomeHtml(displayName),
+    });
+  } catch (err) {
+    console.warn("Failed to send welcome email:", err);
+  }
+}
+
+function buildWelcomeHtml(displayName: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Welcome to Gudangku</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 20px;">
+<body style="margin:0;padding:0;background-color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#e2e8f0;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0f172a;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-          
-          <!-- Header -->
+        <table width="620" cellpadding="0" cellspacing="0" style="max-width:620px;width:100%;">
+
+          <!-- Logo Bar -->
           <tr>
-            <td style="background-color:#10b981;padding:32px 40px;text-align:center;">
-              <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.5px;">Gudangku</h1>
-              <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">Supply Chain Intelligence Hub</p>
+            <td style="padding:24px 0;text-align:center;">
+              <span style="font-size:32px;font-weight:800;color:#34d399;letter-spacing:-1px;">Gudangku</span>
             </td>
           </tr>
 
-          <!-- Body -->
+          <!-- Hero Card -->
           <tr>
-            <td style="padding:40px;">
-              <h2 style="margin:0 0 16px;color:#18181b;font-size:22px;font-weight:600;">
-                Welcome, ${displayName}!
-              </h2>
-              <p style="margin:0 0 24px;color:#52525b;font-size:15px;line-height:1.6;">
-                Your account has been created. Gudangku is an AI-powered warehouse management platform that helps you make smarter inventory decisions.
-              </p>
-
-              <!-- Features -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#065f46 0%,#047857 50%,#059669 100%);border-radius:20px;overflow:hidden;">
                 <tr>
-                  <td style="padding:12px 16px;background-color:#f0fdf4;border-radius:8px;margin-bottom:8px;">
-                    <p style="margin:0;font-size:14px;color:#18181b;">
-                      <strong style="color:#10b981;">1. Upload CSV</strong> — Import your inventory data (date, product, sales, stock) and activate all features instantly.
-                    </p>
-                  </td>
-                </tr>
-                <tr><td style="height:8px;"></td></tr>
-                <tr>
-                  <td style="padding:12px 16px;background-color:#f0fdf4;border-radius:8px;">
-                    <p style="margin:0;font-size:14px;color:#18181b;">
-                      <strong style="color:#10b981;">2. Smart Dashboard</strong> — Real-time command center with stock velocity alerts, deadstock detection, and one-click AI reorder analysis.
-                    </p>
-                  </td>
-                </tr>
-                <tr><td style="height:8px;"></td></tr>
-                <tr>
-                  <td style="padding:12px 16px;background-color:#f0fdf4;border-radius:8px;">
-                    <p style="margin:0;font-size:14px;color:#18181b;">
-                      <strong style="color:#10b981;">3. AI Forecaster</strong> — Predicts sales trends, identifies top performers, and calculates when products will run out.
-                    </p>
-                  </td>
-                </tr>
-                <tr><td style="height:8px;"></td></tr>
-                <tr>
-                  <td style="padding:12px 16px;background-color:#f0fdf4;border-radius:8px;">
-                    <p style="margin:0;font-size:14px;color:#18181b;">
-                      <strong style="color:#10b981;">4. Doc Assistant</strong> — Chat with AI about your inventory data. Ask about reorder strategies, supplier contracts, and optimization.
+                  <td style="padding:48px 40px;text-align:center;">
+                    <p style="margin:0 0 8px;font-size:48px;line-height:1;">&#x1F4E6;</p>
+                    <h1 style="margin:0 0 12px;font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">
+                      Welcome aboard, ${displayName}!
+                    </h1>
+                    <p style="margin:0;font-size:16px;color:#a7f3d0;line-height:1.5;">
+                      Your AI-powered warehouse intelligence is ready.<br/>
+                      Smarter inventory decisions start now.
                     </p>
                   </td>
                 </tr>
               </table>
+            </td>
+          </tr>
 
-              <p style="margin:0 0 24px;color:#52525b;font-size:14px;line-height:1.6;">
-                You receive <strong>10 free AI credits daily</strong>. Each forecast costs 1 credit and each AI consultation costs 3 credits. Credits reset every day at 00:00 UTC.
-              </p>
+          <!-- Spacer -->
+          <tr><td style="height:24px;"></td></tr>
 
-              <!-- CTA -->
+          <!-- Features Grid (2x2) -->
+          <tr>
+            <td>
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td align="center">
-                    <a href="https://www.gudangku.space/dashboard/upload" 
-                       style="display:inline-block;padding:14px 32px;background-color:#10b981;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">
-                      Get Started — Upload Your CSV
-                    </a>
+                  <!-- Feature 1 -->
+                  <td width="50%" style="padding:0 6px 12px 0;vertical-align:top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:16px;border:1px solid #334155;">
+                      <tr>
+                        <td style="padding:24px;">
+                          <p style="margin:0 0 8px;font-size:28px;line-height:1;">&#x1F4CA;</p>
+                          <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#34d399;">Smart Dashboard</p>
+                          <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.5;">
+                            Real-time stock velocity, deadstock alerts, and one-click AI analysis.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <!-- Feature 2 -->
+                  <td width="50%" style="padding:0 0 12px 6px;vertical-align:top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:16px;border:1px solid #334155;">
+                      <tr>
+                        <td style="padding:24px;">
+                          <p style="margin:0 0 8px;font-size:28px;line-height:1;">&#x1F52E;</p>
+                          <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#34d399;">AI Forecaster</p>
+                          <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.5;">
+                            Predict sales trends, identify top products, and stockout timing.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <!-- Feature 3 -->
+                  <td width="50%" style="padding:0 6px 0 0;vertical-align:top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:16px;border:1px solid #334155;">
+                      <tr>
+                        <td style="padding:24px;">
+                          <p style="margin:0 0 8px;font-size:28px;line-height:1;">&#x1F916;</p>
+                          <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#34d399;">Doc Assistant</p>
+                          <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.5;">
+                            Chat with AI about your inventory: reorder strategy, contracts, optimization.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <!-- Feature 4 -->
+                  <td width="50%" style="padding:0 0 0 6px;vertical-align:top;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:16px;border:1px solid #334155;">
+                      <tr>
+                        <td style="padding:24px;">
+                          <p style="margin:0 0 8px;font-size:28px;line-height:1;">&#x1F4C1;</p>
+                          <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#34d399;">CSV Upload</p>
+                          <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.5;">
+                            Import inventory data and unlock every feature in seconds.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
+
+          <!-- Spacer -->
+          <tr><td style="height:24px;"></td></tr>
+
+          <!-- Credits Info Card -->
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:16px;border:1px solid #334155;">
+                <tr>
+                  <td style="padding:24px 28px;">
+                    <p style="margin:0 0 12px;font-size:15px;font-weight:700;color:#fbbf24;">&#x26A1; Your Daily Credits</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:6px 0;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="font-size:13px;color:#94a3b8;">Daily allowance</td>
+                              <td align="right" style="font-size:14px;font-weight:700;color:#34d399;">10 credits</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #334155;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="font-size:13px;color:#94a3b8;">AI Forecast</td>
+                              <td align="right" style="font-size:14px;font-weight:600;color:#e2e8f0;">1 credit</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #334155;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="font-size:13px;color:#94a3b8;">AI Chat / Analysis</td>
+                              <td align="right" style="font-size:14px;font-weight:600;color:#e2e8f0;">3 credits</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;border-top:1px solid #334155;">
+                          <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td style="font-size:13px;color:#94a3b8;">Cache hit (same question)</td>
+                              <td align="right" style="font-size:14px;font-weight:700;color:#34d399;">FREE</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin:12px 0 0;font-size:12px;color:#64748b;">
+                      Credits reset daily at 00:00 UTC. Cached responses are free.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td style="height:28px;"></td></tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td align="center">
+              <a href="https://www.gudangku.space/dashboard/upload"
+                 style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,#059669,#34d399);color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;border-radius:12px;letter-spacing:0.3px;">
+                Get Started &rarr; Upload CSV
+              </a>
+            </td>
+          </tr>
+
+          <!-- Spacer -->
+          <tr><td style="height:32px;"></td></tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding:24px 40px;background-color:#fafafa;border-top:1px solid #e4e4e7;text-align:center;">
-              <p style="margin:0;color:#a1a1aa;font-size:12px;">
-                Powered by Gemini 2.5 Flash AI &bull; gudangku.space
+            <td style="text-align:center;padding:20px 0;border-top:1px solid #1e293b;">
+              <p style="margin:0 0 4px;font-size:12px;color:#475569;">
+                Powered by Gemini 2.5 Flash AI
+              </p>
+              <p style="margin:0;font-size:11px;color:#334155;">
+                gudangku.space &bull; Supply Chain Intelligence Hub
               </p>
             </td>
           </tr>
+
         </table>
       </td>
     </tr>
   </table>
 </body>
-</html>
-      `.trim(),
-    });
-  } catch (err) {
-    // Non-critical — log and continue
-    console.warn("Failed to send welcome email:", err);
-  }
+</html>`;
 }

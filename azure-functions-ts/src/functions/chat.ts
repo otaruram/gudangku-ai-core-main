@@ -1,11 +1,13 @@
 /**
- * POST /api/chat — AI-powered geopolitical supply chain assistant.
- * Uses Redis caching + Credit system (3 credits per call).
+ * POST /api/chat — AI-powered supply chain assistant.
+ * Smart caching: cache hits are FREE (no credits consumed).
+ * Rate limited: 10 requests/minute per user.
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { withAuth, UserClaims } from "../shared/auth";
 import { callGemini } from "../shared/geminiService";
-import { consumeCredits, CreditError } from "../shared/creditSystem";
+import { consumeCredits, getCredits, CreditError } from "../shared/creditSystem";
+import { checkRateLimit } from "../shared/redisCache";
 import { getContainer } from "../shared/cosmosClient";
 import { v4 as uuidv4 } from "uuid";
 
@@ -15,7 +17,19 @@ async function chatHandler(
   claims: UserClaims
 ): Promise<HttpResponseInit> {
   try {
-    // 1. Parse request
+    // 1. Rate limit check (10 req/min per user)
+    const rateCheck = await checkRateLimit(claims.sub, 60, 10);
+    if (!rateCheck.allowed) {
+      return {
+        status: 429,
+        jsonBody: {
+          error: "Rate limit exceeded. Please wait before sending another request.",
+          retry_after_ms: rateCheck.retryAfterMs,
+        },
+      };
+    }
+
+    // 2. Parse request
     let question: string | undefined;
 
     const contentType = req.headers.get("content-type") ?? "";
@@ -34,28 +48,36 @@ async function chatHandler(
       };
     }
 
-    // 2. Check & deduct credits (supply_chain_ai = 3 credits)
-    let userDoc;
-    try {
-      userDoc = await consumeCredits(claims.sub, "supply_chain_ai", claims.email);
-    } catch (err) {
-      if (err instanceof CreditError) {
-        return {
-          status: 429,
-          jsonBody: {
-            error: err.message,
-            remaining_credits: err.remaining,
-            required_credits: err.required,
-          },
-        };
-      }
-      throw err;
-    }
-
-    // 3. Call Gemini (with Redis cache)
+    // 3. Call Gemini (checks Redis cache internally)
     const { text: answer, cached } = await callGemini(question);
 
-    // 4. Persist chat log to Cosmos
+    // 4. Only deduct credits when cache MISS (actual API call)
+    let currentCredits: number;
+    if (cached) {
+      // Cache hit = FREE — just read balance
+      const userDoc = await getCredits(claims.sub, claims.email);
+      currentCredits = userDoc.current_credits;
+    } else {
+      // Cache miss = deduct 3 credits
+      try {
+        const userDoc = await consumeCredits(claims.sub, "supply_chain_ai", claims.email);
+        currentCredits = userDoc.current_credits;
+      } catch (err) {
+        if (err instanceof CreditError) {
+          return {
+            status: 429,
+            jsonBody: {
+              error: err.message,
+              remaining_credits: err.remaining,
+              required_credits: err.required,
+            },
+          };
+        }
+        throw err;
+      }
+    }
+
+    // 5. Persist chat log to Cosmos
     try {
       const container = getContainer("chat_logs");
       await container.items.create({
@@ -64,6 +86,7 @@ async function chatHandler(
         question,
         answer,
         cached,
+        creditCharged: cached ? 0 : 3,
         isHelpful: true,
         createdAt: new Date().toISOString(),
       });
@@ -76,7 +99,8 @@ async function chatHandler(
       jsonBody: {
         response: answer,
         cached,
-        remaining_credits: userDoc.current_credits,
+        remaining_credits: currentCredits,
+        credit_charged: cached ? 0 : 3,
       },
     };
   } catch (err: any) {

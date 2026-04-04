@@ -78,3 +78,41 @@ export async function setCachedResponse(
     console.warn("Redis SET failed, skipping cache:", err);
   }
 }
+
+/**
+ * Sliding-window rate limiter.
+ * Returns { allowed, remaining, retryAfterMs }.
+ */
+export async function checkRateLimit(
+  userId: string,
+  windowSeconds: number = 60,
+  maxRequests: number = 10
+): Promise<{ allowed: boolean; remaining: number; retryAfterMs: number }> {
+  try {
+    const key = `ratelimit:${userId}`;
+    const redis = getRedis();
+    const now = Date.now();
+    const windowMs = windowSeconds * 1000;
+
+    // Use a sorted set: score = timestamp, value = unique request id
+    const multi = redis.multi();
+    multi.zremrangebyscore(key, 0, now - windowMs); // prune old entries
+    multi.zadd(key, now, `${now}:${Math.random().toString(36).slice(2, 8)}`);
+    multi.zcard(key);
+    multi.expire(key, windowSeconds + 1);
+    const results = await multi.exec();
+
+    const count = (results?.[2]?.[1] as number) ?? 0;
+    if (count > maxRequests) {
+      // Find oldest entry in window to compute retry-after
+      const oldest = await redis.zrange(key, 0, 0, "WITHSCORES");
+      const oldestTs = oldest.length >= 2 ? parseInt(oldest[1]) : now;
+      const retryAfterMs = Math.max(0, (oldestTs + windowMs) - now);
+      return { allowed: false, remaining: 0, retryAfterMs };
+    }
+    return { allowed: true, remaining: maxRequests - count, retryAfterMs: 0 };
+  } catch (err) {
+    console.warn("Rate limit check failed, allowing request:", err);
+    return { allowed: true, remaining: -1, retryAfterMs: 0 };
+  }
+}

@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Gudangku — Supply Chain Intelligence Hub
 
-## Project info
+AI-powered warehouse management with Gemini 2.5 Flash. Built for smart inventory decisions.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Build**: v2.1.0 (2026-04-04)
 
 ## How can I edit this code?
 

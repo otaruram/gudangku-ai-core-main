@@ -104,10 +104,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
             const data = await response.json();
 
+            const cacheNote = data.cached ? ' (cached response — no credits used)' : '';
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: data.response || "Sorry, unable to connect to the server.",
+                content: (data.response || "Sorry, unable to connect to the server.") + cacheNote,
                 timestamp: new Date(),
             };
 
