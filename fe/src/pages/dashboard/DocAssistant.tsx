@@ -1,20 +1,25 @@
 import { AIStatus } from "@/components/features/assistant/AIStatus";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MessageList } from "@/components/features/assistant/MessageList";
 import { ChatInput } from "@/components/features/assistant/ChatInput";
 import { useChatContext } from "@/context/ChatContext";
+import { Database, Upload } from "lucide-react";
 
 export default function DocAssistant() {
   const { messages, input, setInput, isTyping, handleSend, messagesEndRef } = useChatContext();
+  const [csvLoaded, setCsvLoaded] = useState(false);
+  const csvFileName = localStorage.getItem('csvFileName');
+
+  useEffect(() => {
+    setCsvLoaded(!!localStorage.getItem('csvContext'));
+  }, []);
 
   // Check for auto-prompt from Dashboard
   useEffect(() => {
     const prompt = localStorage.getItem('assistant_prompt');
     if (prompt) {
-      localStorage.removeItem('assistant_prompt'); // Consume it
+      localStorage.removeItem('assistant_prompt');
       setInput(prompt);
-      // Optional: Auto-send after a short delay or just let user click send
-      // handleSend() // If we want auto send
     }
   }, []);
 
@@ -24,7 +29,23 @@ export default function DocAssistant() {
       <div className="mb-3 sm:mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold sm:text-2xl">Doc Assistant</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">Q&A on SOP documents with local AI</p>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            {csvLoaded
+              ? "AI assistant with your warehouse data context"
+              : "Upload a CSV in Forecaster to enable data-aware answers"}
+          </p>
+          {csvLoaded && (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-500">
+              <Database className="h-3 w-3" />
+              CSV loaded: {csvFileName || 'data.csv'}
+            </div>
+          )}
+          {!csvLoaded && (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-yellow-600">
+              <Upload className="h-3 w-3" />
+              No CSV data — answers will be generic
+            </div>
+          )}
         </div>
         <button
           onClick={() => {

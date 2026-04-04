@@ -2,14 +2,14 @@ import { useForecast } from "@/context/ForecastContext";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { 
   TrendingUp, TrendingDown, AlertTriangle, ShoppingCart, 
-  ArrowRight, Zap, Package, Calendar 
+  ArrowRight, Zap, Package, Calendar, Upload 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom"; // Add this
+import { useNavigate } from "react-router-dom";
 
 export default function DashboardHome() {
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
   const { data } = useForecast();
   const { forecastChart, bestSellers, stockAlerts, hasData } = data;
 
@@ -27,32 +27,50 @@ export default function DashboardHome() {
     alert(`Initiating Automated Restock for: ${productName}. Draft email created.`);
   };
 
+  const csvFileName = localStorage.getItem('csvFileName');
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border/50 pb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
           <p className="text-muted-foreground mt-1">
-            {hasData ? "System active. Monitoring 24/7." : "Awaiting data. Please upload a CSV."}
+            {hasData
+              ? `System active. Monitoring 24/7.${csvFileName ? ` Data: ${csvFileName}` : ''}`
+              : "Upload a CSV file to activate all features."}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-medium border border-emerald-500/20">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            LIVE MONITORING
-          </div>
+          {hasData ? (
+            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-medium border border-emerald-500/20">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              LIVE MONITORING
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1 bg-yellow-500/10 text-yellow-600 rounded-full text-xs font-medium border border-yellow-500/20">
+              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+              AWAITING DATA
+            </div>
+          )}
         </div>
       </div>
 
       {!hasData ? (
-        <div className="rounded-xl border border-dashed p-12 text-center">
-          <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <div className="rounded-xl border border-dashed p-8 sm:p-12 text-center">
+          <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold">No Operational Data</h3>
+          <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+            Upload a CSV file in the Forecaster to activate the Dashboard, Doc Assistant, History, and Stock Alerts.
+          </p>
+          <div className="mt-4 text-xs text-muted-foreground">
+            <p>CSV format: <span className="font-mono bg-secondary px-1">date, product, sales, stock</span></p>
+          </div>
           <Button 
             className="mt-6" 
-            onClick={() => navigate('/dashboard/forecaster')} // FIX: Use navigate
+            onClick={() => navigate('/dashboard/forecaster')}
           >
-            Open Intelligence Engine
+            <Upload className="mr-2 h-4 w-4" />
+            Upload CSV in Forecaster
           </Button>
         </div>
       ) : (

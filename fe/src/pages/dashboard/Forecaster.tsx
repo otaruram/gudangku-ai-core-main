@@ -1,10 +1,11 @@
 
 
 import { useState } from "react";
-import { Info, ArrowUpRight, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Info, ArrowUpRight, TrendingUp, AlertTriangle, CheckCircle2, Download } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 import { UploadZone } from "@/components/features/forecast/UploadZone";
 import { useForecast } from "@/context/ForecastContext";
+import { Button } from "@/components/ui/button";
 
 // Theme Colors
 const COLORS = {
@@ -16,16 +17,62 @@ const COLORS = {
   bar_danger: "#ef4444"
 };
 
+// Sample CSV for users to download
+const SAMPLE_CSV = `date,product,sales,stock
+2025-01-01,Widget A,120,500
+2025-01-01,Widget B,85,300
+2025-01-01,Gadget C,200,150
+2025-01-02,Widget A,135,380
+2025-01-02,Widget B,90,210
+2025-01-02,Gadget C,180,100
+2025-01-03,Widget A,110,270
+2025-01-03,Widget B,95,115
+2025-01-03,Gadget C,220,50
+2025-01-04,Widget A,140,130
+2025-01-04,Widget B,75,40
+2025-01-04,Gadget C,190,30
+2025-01-05,Widget A,125,500
+2025-01-05,Widget B,100,300
+2025-01-05,Gadget C,210,200
+2025-01-06,Widget A,130,370
+2025-01-06,Widget B,88,212
+2025-01-06,Gadget C,195,100
+2025-01-07,Widget A,145,225
+2025-01-07,Widget B,92,120
+2025-01-07,Gadget C,205,50`;
+
+function downloadSampleCSV() {
+  const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sample_inventory.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function Forecaster() {
   // Use Context instead of Local State
   const { data, setData } = useForecast();
 
-  // Local loading state is fine
+  // Local loading & drag state
   const [loading, setLoading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileProcess = async (file: File) => {
     setLoading(true);
     try {
+      // Read CSV text for context sharing with Doc Assistant
+      const csvText = await file.text();
+      const csvLines = csvText.split('\n');
+      // Store first row (header) + summary for AI context
+      const header = csvLines[0];
+      const rowCount = csvLines.length - 1;
+      const sampleRows = csvLines.slice(1, 6).join('\n');
+      const csvSummary = `File: ${file.name}\nColumns: ${header}\nTotal rows: ${rowCount}\nSample data:\n${sampleRows}`;
+      localStorage.setItem('csvContext', csvSummary);
+      localStorage.setItem('csvFileName', file.name);
+
       const formData = new FormData();
       formData.append("file", file);
 
@@ -38,8 +85,12 @@ export default function Forecaster() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Forecast failed");
+        let errMsg = "Forecast failed";
+        try {
+          const errorData = await response.json();
+          errMsg = errorData.error || errorData.detail || errMsg;
+        } catch { /* ignore */ }
+        throw new Error(errMsg);
       }
 
       const responseData = await response.json();
@@ -106,10 +157,19 @@ export default function Forecaster() {
         <div className="max-w-2xl mx-auto mt-12">
           <div className={loading ? "opacity-50 pointer-events-none" : ""}>
             <UploadZone
-              isDragging={false}
-              onDragOver={() => { }}
-              onDragLeave={() => { }}
-              onDrop={() => { }}
+              isDragging={isDragging}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                const file = e.dataTransfer.files[0];
+                if (file && file.name.endsWith('.csv')) {
+                  handleFileProcess(file);
+                } else {
+                  alert("Please upload a .csv file");
+                }
+              }}
               onFileSelect={handleFileProcess}
             />
             {loading && (
@@ -120,13 +180,21 @@ export default function Forecaster() {
               </div>
             )}
             <div className="mt-8 p-4 bg-secondary/20 rounded-lg text-xs text-muted-foreground">
-              <p className="font-semibold text-foreground mb-2">Supported Columns (Auto-Detect):</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-foreground">Required CSV Format:</p>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={downloadSampleCSV}>
+                  <Download className="h-3 w-3" />
+                  Download Sample CSV
+                </Button>
+              </div>
+              <p className="mb-2">Your CSV must have these columns (names are auto-detected):</p>
               <ul className="list-disc pl-4 space-y-1">
-                <li>Date: <span className="font-mono bg-secondary px-1">tanggal</span>, <span className="font-mono bg-secondary px-1">date</span></li>
-                <li>Sales: <span className="font-mono bg-secondary px-1">terjual</span>, <span className="font-mono bg-secondary px-1">qty</span>, <span className="font-mono bg-secondary px-1">sales</span></li>
-                <li>Product: <span className="font-mono bg-secondary px-1">nama</span>, <span className="font-mono bg-secondary px-1">product</span>, <span className="font-mono bg-secondary px-1">item</span></li>
-                <li>Stock: <span className="font-mono bg-secondary px-1">sisa</span>, <span className="font-mono bg-secondary px-1">stok</span></li>
+                <li><strong>Date</strong> (required): <span className="font-mono bg-secondary px-1">date</span>, <span className="font-mono bg-secondary px-1">tanggal</span>, <span className="font-mono bg-secondary px-1">ds</span></li>
+                <li><strong>Sales/Quantity</strong> (required): <span className="font-mono bg-secondary px-1">sales</span>, <span className="font-mono bg-secondary px-1">qty</span>, <span className="font-mono bg-secondary px-1">quantity</span>, <span className="font-mono bg-secondary px-1">y</span></li>
+                <li><strong>Product</strong> (recommended): <span className="font-mono bg-secondary px-1">product</span>, <span className="font-mono bg-secondary px-1">item</span>, <span className="font-mono bg-secondary px-1">name</span>, <span className="font-mono bg-secondary px-1">sku</span></li>
+                <li><strong>Stock</strong> (recommended): <span className="font-mono bg-secondary px-1">stock</span>, <span className="font-mono bg-secondary px-1">inventory</span>, <span className="font-mono bg-secondary px-1">available</span></li>
               </ul>
+              <p className="mt-2 text-[10px]">Including <strong>product</strong> and <strong>stock</strong> columns activates Dashboard stats, Stock Alerts, and Doc Assistant context.</p>
             </div>
           </div>
         </div>
