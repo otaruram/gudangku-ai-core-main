@@ -5,7 +5,8 @@ on:
     branches: [main]
     paths:
       - 'azure-functions-ts/**'
-  workflow_dispatch: # allow manual trigger
+      - '.github/workflows/deploy-azure-functions.yml'
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
