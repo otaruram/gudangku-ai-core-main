@@ -13,7 +13,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 
 // API URL
-import { API_URL } from "@/lib/config";
+import { API_URL, getAuthHeaders } from "@/lib/config";
 
 type HistoryType = "all" | "forecast" | "chat";
 
@@ -55,13 +55,14 @@ export default function History() {
     setLoading(true);
     try {
       // Fetch Timeline
-      const timelineRes = await fetch(`${API_URL}/history/all`);
+      const authHeaders = await getAuthHeaders();
+      const timelineRes = await fetch(`${API_URL}/history/all`, { headers: authHeaders });
       if (timelineRes.ok) {
         setItems(await timelineRes.json());
       }
 
       // Fetch Stats
-      const statsRes = await fetch(`${API_URL}/history/stats`);
+      const statsRes = await fetch(`${API_URL}/history/stats`, { headers: authHeaders });
       if (statsRes.ok) {
         setStats(await statsRes.json());
       }
@@ -83,8 +84,9 @@ export default function History() {
     setDetailLoading(true);
     try {
       // Fetch specific detail based on type
+      const authHeaders = await getAuthHeaders();
       const endpoint = item.type === 'forecast' ? `/history/forecast/${item.id}` : `/history/chat/${item.id}`;
-      const res = await fetch(`${API_URL}${endpoint}`);
+      const res = await fetch(`${API_URL}${endpoint}`, { headers: authHeaders });
       if (res.ok) {
         setDetailData(await res.json());
       }
@@ -97,10 +99,9 @@ export default function History() {
     setIsReplayOpen(true);
     setDetailLoading(true);
     try {
-      // Re-simulation often means just showing the same data but in an "active" way
-      // For now we fetch the same detail data
+      const authHeaders = await getAuthHeaders();
       const endpoint = item.type === 'forecast' ? `/history/forecast/${item.id}` : `/history/chat/${item.id}`;
-      const res = await fetch(`${API_URL}${endpoint}`);
+      const res = await fetch(`${API_URL}${endpoint}`, { headers: authHeaders });
       if (res.ok) {
         setDetailData(await res.json());
       }
@@ -118,9 +119,9 @@ export default function History() {
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (days === 0) return "Hari ini";
-    if (days === 1) return "Kemarin";
-    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   return (
@@ -128,8 +129,8 @@ export default function History() {
       {/* Page Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold sm:text-2xl">Memori Strategis</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">Audit Trail Keputusan AI & Operasional</p>
+          <h1 className="text-xl font-bold sm:text-2xl">Strategic Memory</h1>
+          <p className="text-sm text-muted-foreground sm:text-base">AI Decision & Operations Audit Trail</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchData}>
@@ -146,10 +147,10 @@ export default function History() {
       {/* Stats Summary - Dynamic */}
       <div className="grid gap-3 grid-cols-2 sm:gap-4 md:grid-cols-4">
         {[
-          { label: "Total Prediksi", value: stats?.total_predictions ?? "-", icon: TrendingUp },
-          { label: "Total Konsultasi", value: stats?.total_consultations ?? "-", icon: MessageSquare },
-          { label: "Rata-rata Akurasi", value: stats?.avg_accuracy ?? "-", icon: TrendingUp },
-          { label: "Waktu Respon", value: stats?.response_time ?? "-", icon: Clock },
+          { label: "Total Predictions", value: stats?.total_predictions ?? "-", icon: TrendingUp },
+          { label: "Total Consultations", value: stats?.total_consultations ?? "-", icon: MessageSquare },
+          { label: "Average Accuracy", value: stats?.avg_accuracy ?? "-", icon: TrendingUp },
+          { label: "Response Time", value: stats?.response_time ?? "-", icon: Clock },
         ].map((stat, i) => (
           <div key={i} className="rounded-lg border border-border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2">
@@ -167,7 +168,7 @@ export default function History() {
           <Filter className="h-4 w-4 text-muted-foreground" />
           <div className="flex rounded-lg border border-border p-1">
             {[
-              { key: "all", label: "Semua Aktivitas" },
+              { key: "all", label: "All Activity" },
               { key: "forecast", label: "Forecaster Log" },
               { key: "chat", label: "Consultation Log" },
             ].map((tab) => (
@@ -240,11 +241,11 @@ export default function History() {
                     <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground sm:mt-2 sm:gap-4 sm:text-xs">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {formatDate(item.timestamp)} • {new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                        {formatDate(item.timestamp)} • {new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                       {item.metadata?.accuracy && (
                         <span className="text-emerald-500 font-medium">
-                          Akurasi: {item.metadata.accuracy}%
+                          Accuracy: {item.metadata.accuracy}%
                         </span>
                       )}
                       {item.metadata?.products && (
@@ -258,7 +259,7 @@ export default function History() {
                 <div className="flex items-center gap-2 sm:shrink-0">
                   <Button variant="ghost" size="sm" className="h-8 text-xs sm:h-9 sm:text-sm" onClick={() => handleView(item)}>
                     <Eye className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                    Lihat
+                    View
                   </Button>
                   {item.type === 'forecast' && (
                     <Button variant="outline" size="sm" className="h-8 text-xs border-emerald-500 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 sm:h-9 sm:text-sm" onClick={() => handleReplay(item)}>
@@ -354,7 +355,7 @@ export default function History() {
 
                 // If chartData is empty, maybe it's in a different format or missing
                 if (!chartData || chartData.length === 0) {
-                  return <p className="text-center text-muted-foreground p-12">Simulasi visual tidak tersedia untuk data ini (Format Data Invalid atau Kosong).</p>;
+                  return <p className="text-center text-muted-foreground p-12">Visual simulation not available for this data (Invalid or Empty Data Format).</p>;
                 }
 
                 return (
@@ -371,14 +372,14 @@ export default function History() {
                           dataKey="ds"
                           tickFormatter={(val) => {
                             // Handle ISO string to short date
-                            try { return new Date(val).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }); }
+                            try { return new Date(val).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }); }
                             catch { return val; }
                           }}
                         />
                         <YAxis />
                         <Tooltip
-                          labelFormatter={(val) => new Date(val).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                          formatter={(val: number) => [Math.round(val), "Prediksi Sales"]}
+                          labelFormatter={(val) => new Date(val).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                          formatter={(val: number) => [Math.round(val), "Predicted Sales"]}
                         />
                         <Area type="monotone" dataKey="yhat" stroke="#10b981" fillOpacity={1} fill="url(#replayGreen)" />
                       </AreaChart>

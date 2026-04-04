@@ -29,9 +29,11 @@ export default function Forecaster() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const { API_URL } = await import("@/lib/config");
+      const { API_URL, getAuthHeaders } = await import("@/lib/config");
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(`${API_URL}/forecast/365`, {
         method: "POST",
+        headers: { ...authHeaders },
         body: formData,
       });
 
@@ -44,7 +46,7 @@ export default function Forecaster() {
 
       // 1. Parse Forecast Chart
       const mappedForecast = responseData.forecast_chart.map((item: any) => ({
-        date: new Date(item.ds).toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
+        date: new Date(item.ds).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
         value: Math.round(item.yhat)
       }));
 
@@ -63,7 +65,7 @@ export default function Forecaster() {
 
     } catch (error: any) {
       console.error("Forecast Error:", error);
-      alert(`Gagal: ${error.message}`);
+      alert(`Failed: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -88,13 +90,13 @@ export default function Forecaster() {
         {hasData && (
           <button
             onClick={() => {
-              if (confirm("Ganti File? Analisis saat ini akan dihapus dari tampilan (tetap tersimpan di History).")) {
+              if (confirm("Change File? Current analysis will be removed from view (still saved in History).")) {
                 setData({ ...data, hasData: false, forecastChart: [], bestSellers: [], stockAlerts: [] });
               }
             }}
             className="text-sm font-medium text-destructive hover:underline border border-destructive/20 rounded-md px-3 py-1 bg-destructive/5"
           >
-            Ganti File / Reset
+            Change File / Reset
           </button>
         )}
       </div>
@@ -114,7 +116,7 @@ export default function Forecaster() {
               <div className="text-center mt-6 space-y-2">
                 <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-black border-r-transparent"></div>
                 <p className="text-sm font-medium">Decomposing Sales Data...</p>
-                <p className="text-xs text-muted-foreground">Analisis Historis • Stok Velocity • Forecasting</p>
+                <p className="text-xs text-muted-foreground">Historical Analysis • Stock Velocity • Forecasting</p>
               </div>
             )}
             <div className="mt-8 p-4 bg-secondary/20 rounded-lg text-xs text-muted-foreground">
@@ -157,10 +159,10 @@ export default function Forecaster() {
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Tidak ada data produk.</p>
+                <p className="text-sm text-muted-foreground">No product data available.</p>
               )}
               <p className="text-xs text-muted-foreground mt-4 italic">
-                *Produk dengan kontribusi margin tertinggi (pareto principle)
+                *Products with the highest margin contribution (pareto principle)
               </p>
             </div>
           </div>
@@ -239,7 +241,7 @@ export default function Forecaster() {
                   <div key={i} className="bg-white border p-4 rounded-lg flex justify-between items-center shadow-sm">
                     <div>
                       <h4 className="font-bold text-sm">{item.product}</h4>
-                      <p className="text-xs text-muted-foreground mt-1">Stok: {item.current_stock}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Stock: {item.current_stock}</p>
                     </div>
                     <div className="text-right">
                       {item.status === 'CRITICAL' ? (

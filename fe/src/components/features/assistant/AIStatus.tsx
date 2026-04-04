@@ -10,12 +10,12 @@ export function AIStatus() {
                 </div>
                 <div>
                     <p className="text-xs font-medium sm:text-sm">Local Brain Active</p>
-                    <p className="text-[10px] text-muted-foreground sm:text-xs">Ollama + llama3 • Data aman, offline</p>
+                    <p className="text-[10px] text-muted-foreground sm:text-xs">Ollama + llama3 • Data safe, offline</p>
                 </div>
             </div>
             <div className="flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1">
                 <Sparkles className="h-3 w-3 text-accent" />
-                <span className="text-[10px] font-medium text-accent sm:text-xs">128 dokumen terindex</span>
+                <span className="text-[10px] font-medium text-accent sm:text-xs">128 documents indexed</span>
             </div>
         </div>
     );

@@ -50,9 +50,9 @@ export function DashboardLayout() {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      toast.error("Logout gagal: " + error.message);
+      toast.error("Logout failed: " + error.message);
     } else {
-      toast.success("Berhasil logout");
+      toast.success("Successfully logged out");
       navigate("/", { replace: true });
     }
   };
@@ -113,7 +113,7 @@ export function DashboardLayout() {
 
 
   const handleCleanup = () => {
-    if (confirm("Jalankan Pembersihan Bulanan?\n\nKebijakan: Data lokal > 1 tahun akan dihapus.\nIni akan me-refresh aplikasi.")) {
+    if (confirm("Run Monthly Cleanup?\n\nPolicy: Local data older than 1 year will be deleted.\nThis will refresh the application.")) {
       // Mark cleaned today
       localStorage.setItem('lastCleanup', Date.now().toString());
 
@@ -137,7 +137,7 @@ export function DashboardLayout() {
         }
       }
 
-      alert("Maintenance Selesai. Data lama berhasil dibersihkan.");
+      alert("Maintenance Complete. Old data has been cleaned up.");
       window.location.reload();
     }
   };
@@ -234,7 +234,7 @@ export function DashboardLayout() {
               </div>
               <div>
                 <p className="text-xs font-medium text-sidebar-foreground">Local Brain Active</p>
-                <p className="text-[10px] text-sidebar-muted">Data aman, offline</p>
+                <p className="text-[10px] text-sidebar-muted">Data safe, offline</p>
               </div>
             </div>
           </div>
@@ -285,17 +285,17 @@ export function DashboardLayout() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72">
                 <div className="p-2 border-b text-xs font-semibold text-muted-foreground">
-                  Notifikasi Sistem
+                  System Notifications
                 </div>
                 {showCleanup ? (
                   <DropdownMenuItem className="cursor-pointer bg-destructive/10" onClick={handleCleanup}>
                     <div className="flex flex-col gap-1 w-full">
                       <span className="font-medium flex items-center gap-2 text-destructive">
                         <span className="w-2 h-2 rounded-full bg-destructive" />
-                        🔔 Maintenance Bulanan Diperlukan
+                        🔔 Monthly Maintenance Required
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Sudah waktunya bersihkan data lama. Klik untuk jalankan maintenance.
+                        It's time to clean up old data. Click to run maintenance.
                       </span>
                     </div>
                   </DropdownMenuItem>
@@ -304,10 +304,10 @@ export function DashboardLayout() {
                     <div className="flex flex-col gap-1 w-full">
                       <span className="font-medium flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500" />
-                        ✅ Sistem Bersih
+                        ✅ System Clean
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Maintenance berikutnya: <strong>{daysUntilCleanup} hari lagi</strong>
+                        Next maintenance: <strong>{daysUntilCleanup} days left</strong>
                       </span>
                     </div>
                   </DropdownMenuItem>

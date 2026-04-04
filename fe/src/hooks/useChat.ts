@@ -11,7 +11,7 @@ const sampleMessages: Message[] = [
     {
         id: "1",
         role: "assistant",
-        content: "Halo! Saya Doc Assistant yang terhubung dengan database dokumen SOP Anda. Tanyakan apa saja tentang prosedur gudang, kebijakan retur, atau standar operasional lainnya.",
+        content: "Hello! I'm Doc Assistant connected to your SOP document database. Ask me anything about warehouse procedures, return policies, or other operational standards.",
         timestamp: new Date(),
     },
 ];
@@ -36,7 +36,7 @@ export function useChat() {
         const userMessage: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: input || (file ? `[Mengirim Dokumen: ${file.name}]` : ""),
+            content: input || (file ? `[Sending Document: ${file.name}]` : ""),
             timestamp: new Date(),
         };
 
@@ -46,16 +46,18 @@ export function useChat() {
 
         try {
             const formData = new FormData();
-            formData.append("question", input || "Tolong analisis dokumen ini.");
+            formData.append("question", input || "Please analyze this document.");
             if (file) {
                 formData.append("file", file);
             }
 
             // Use production backend URL - mobile devices need absolute URL
-            const { API_URL } = await import("@/lib/config");
+            const { API_URL, getAuthHeaders } = await import("@/lib/config");
+            const authHeaders = await getAuthHeaders();
 
             const response = await fetch(`${API_URL}/chat`, {
                 method: "POST",
+                headers: { ...authHeaders },
                 body: formData,
             });
 
@@ -68,7 +70,7 @@ export function useChat() {
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: data.response || "Maaf, saya tidak dapat terhubung ke server.",
+                content: data.response || "Sorry, unable to connect to the server.",
                 timestamp: new Date(),
             };
 
@@ -78,7 +80,7 @@ export function useChat() {
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: "Maaf, terjadi kesalahan saat menghubungi AI. Pastikan backend berjalan.",
+                content: "Sorry, an error occurred while contacting the AI. Make sure the backend is running.",
                 timestamp: new Date(),
             };
             setMessages(prev => [...prev, errorMessage]);

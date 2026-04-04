@@ -38,10 +38,10 @@ export function UploadZone({ isDragging, onDragOver, onDragLeave, onDrop, onFile
         </div>
         <div>
           <p className="text-sm font-medium sm:text-base">
-            {isDragging ? "Lepaskan file di sini" : "Drag & Drop file CSV Anda"}
+            {isDragging ? "Drop file here" : "Drag & Drop your CSV file"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            atau klik untuk memilih file dari komputer
+            or click to select a file from your computer
           </p>
         </div>
         <div className="relative">
@@ -54,7 +54,7 @@ export function UploadZone({ isDragging, onDragOver, onDragLeave, onDrop, onFile
           />
           <Button variant="outline" size="sm" className="mt-1 sm:mt-2 pointer-events-none">
             <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Pilih File CSV
+            Select CSV File
           </Button>
         </div>
         <p className="text-[10px] text-muted-foreground sm:text-xs">

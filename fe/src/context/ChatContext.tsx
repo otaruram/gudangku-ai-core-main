@@ -30,7 +30,7 @@ export const useChatContext = () => {
 const SAMPLE_WELCOME: Message = {
     id: "welcome",
     role: "assistant",
-    content: "Halo! Saya Doc Assistant yang terhubung dengan database dokumen SOP dan data Forecast Gudang Anda.",
+    content: "Hello! I'm Doc Assistant, connected to your SOP document database and Warehouse Forecast data.",
     timestamp: new Date(),
 };
 
@@ -64,7 +64,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         const userMessage: Message = {
             id: Date.now().toString(),
             role: "user",
-            content: input || (file ? `[Mengirim Dokumen: ${file.name}]` : ""),
+            content: input || (file ? `[Sending Document: ${file.name}]` : ""),
             timestamp: new Date(),
         };
 
@@ -74,15 +74,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
         try {
             const formData = new FormData();
-            formData.append("question", input || "Tolong analisis dokumen ini.");
+            formData.append("question", input || "Please analyze this document.");
             if (file) {
                 formData.append("file", file);
             }
 
-            const { API_URL } = await import("@/lib/config");
+            const { API_URL, getAuthHeaders } = await import("@/lib/config");
+            const authHeaders = await getAuthHeaders();
 
             const response = await fetch(`${API_URL}/chat`, {
                 method: "POST",
+                headers: { ...authHeaders },
                 body: formData,
             });
 
@@ -95,7 +97,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: data.response || "Maaf, saya tidak dapat terhubung ke server.",
+                content: data.response || "Sorry, unable to connect to the server.",
                 timestamp: new Date(),
             };
 
@@ -105,7 +107,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: "Maaf, terjadi kesalahan teknis. Pastikan backend berjalan.",
+                content: "Sorry, a technical error occurred. Make sure the backend is running.",
                 timestamp: new Date(),
             };
             setMessages(prev => [...prev, errorMessage]);

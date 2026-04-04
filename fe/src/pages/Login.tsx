@@ -25,27 +25,27 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          // Pastikan URL ini sudah terdaftar di Redirect URLs Supabase Dashboard
+          // Make sure this URL is registered in Redirect URLs on Supabase Dashboard
           redirectTo: `${window.location.origin}/dashboard`,
         },
       });
 
       if (error) throw error;
     } catch (error: any) {
-      toast.error("Login Gagal: " + error.message);
+      toast.error("Login Failed: " + error.message);
       setIsLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen">
-      {/* Panel Kiri - Dekoratif (Hidden on mobile) */}
+      {/* Left Panel - Decorative (Hidden on mobile) */}
       <div className="hidden w-1/2 bg-foreground xl:block">
         <div className="flex h-full flex-col justify-between p-12">
           <Logo variant="light" />
           <div className="max-w-md">
             <blockquote className="text-2xl font-light leading-relaxed text-primary-foreground/90">
-              "Gudangku telah mengubah cara kami mengelola inventori. Prediksi AI-nya sangat akurat."
+              "Gudangku has transformed how we manage inventory. The AI predictions are incredibly accurate."
             </blockquote>
             <div className="mt-6">
               <p className="font-medium text-primary-foreground">Ahmad Wijaya</p>
@@ -54,12 +54,12 @@ export default function Login() {
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-            <span className="text-xs text-primary-foreground/60">Sistem terenkripsi aman</span>
+            <span className="text-xs text-primary-foreground/60">Securely encrypted system</span>
           </div>
         </div>
       </div>
 
-      {/* Panel Kanan - Form Login */}
+      {/* Right Panel - Login Form */}
       <div className="flex w-full items-center justify-center bg-secondary/30 px-6 xl:w-1/2">
         <div className="w-full max-w-md">
           <Link
@@ -67,14 +67,14 @@ export default function Login() {
             className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Kembali ke Beranda
+            Back to Home
           </Link>
 
           <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
             <div className="mb-8 text-center">
-              <h1 className="text-2xl font-bold">Selamat Datang</h1>
+              <h1 className="text-2xl font-bold">Welcome</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Masuk untuk mengakses Command Center Anda
+                Sign in to access your Command Center
               </p>
             </div>
 
@@ -88,13 +88,13 @@ export default function Login() {
               ) : (
                 <>
                   <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                  Masuk dengan Google
+                  Sign in with Google
                 </>
               )}
             </button>
 
             <p className="mt-6 text-center text-xs text-muted-foreground">
-              Dengan masuk, Anda menyetujui <span className="underline cursor-pointer">Syarat & Ketentuan</span> kami.
+              By signing in, you agree to our <span className="underline cursor-pointer">Terms & Conditions</span>.
             </p>
           </div>
         </div>

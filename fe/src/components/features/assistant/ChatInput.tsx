@@ -70,7 +70,7 @@ export function ChatInput({ input, setInput, handleSend, isTyping }: ChatInputPr
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={selectedFile ? "Tambahkan pesan untuk dokumen ini..." : "Tanyakan tentang dokumen SOP Anda..."}
+                    placeholder={selectedFile ? "Add a message for this document..." : "Ask about your SOP documents..."}
                     rows={1}
                     className="flex-1 resize-none border-0 bg-transparent py-2 text-sm placeholder:text-muted-foreground focus:outline-none"
                 />
@@ -84,7 +84,7 @@ export function ChatInput({ input, setInput, handleSend, isTyping }: ChatInputPr
                 </Button>
             </div>
             <p className="mt-1.5 hidden px-2 text-xs text-muted-foreground sm:block sm:mt-2">
-                Tekan Enter untuk kirim • Shift + Enter untuk baris baru
+                Press Enter to send • Shift + Enter for new line
             </p>
         </div>
     );

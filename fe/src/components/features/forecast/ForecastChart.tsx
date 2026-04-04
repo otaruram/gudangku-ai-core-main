@@ -17,17 +17,17 @@ export function ForecastChart({ data }: ForecastChartProps) {
         <div className="rounded-xl border border-border bg-card p-4 sm:p-6">
             <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-sm font-semibold sm:text-base">Grafik Prediksi Stok</h2>
-                    <p className="text-xs text-muted-foreground sm:text-sm">Data historis vs prediksi AI</p>
+                    <h2 className="text-sm font-semibold sm:text-base">Stock Prediction Chart</h2>
+                    <p className="text-xs text-muted-foreground sm:text-sm">Historical data vs AI prediction</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                         <div className="h-2.5 w-2.5 rounded-full bg-foreground sm:h-3 sm:w-3" />
-                        <span className="text-xs sm:text-sm">Data Aktual</span>
+                        <span className="text-xs sm:text-sm">Actual Data</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="h-2.5 w-2.5 rounded-full bg-accent sm:h-3 sm:w-3" />
-                        <span className="text-xs sm:text-sm">Prediksi AI</span>
+                        <span className="text-xs sm:text-sm">AI Prediction</span>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@ export function ForecastChart({ data }: ForecastChartProps) {
             <div className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-accent/10 p-2 sm:mt-4 sm:p-3">
                 <Sparkles className="h-3 w-3 text-accent sm:h-4 sm:w-4" />
                 <span className="text-xs font-medium text-accent sm:text-sm">
-                    Garis putus-putus menunjukkan prediksi masa depan
+                    Dashed lines indicate future predictions
                 </span>
             </div>
         </div>

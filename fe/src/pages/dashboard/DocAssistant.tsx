@@ -24,18 +24,18 @@ export default function DocAssistant() {
       <div className="mb-3 sm:mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold sm:text-2xl">Doc Assistant</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">Tanya jawab dokumen SOP dengan AI lokal</p>
+          <p className="text-sm text-muted-foreground sm:text-base">Q&A on SOP documents with local AI</p>
         </div>
         <button
           onClick={() => {
-            if (confirm("Ganti Sesi Dokumen? Chat saat ini akan dibersihkan.")) {
+            if (confirm("Switch Document Session? Current chat will be cleared.")) {
               localStorage.removeItem('chatHistory');
               window.location.reload();
             }
           }}
           className="text-xs border px-2 py-1 rounded hover:bg-secondary"
         >
-          Ganti Dokumen / Reset
+          Change Document / Reset
         </button>
       </div>
 

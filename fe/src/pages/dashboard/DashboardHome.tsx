@@ -6,10 +6,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom"; // Tambahkan ini
+import { useNavigate } from "react-router-dom"; // Add this
 
 export default function DashboardHome() {
-  const navigate = useNavigate(); // Inisialisasi navigate
+  const navigate = useNavigate(); // Initialize navigate
   const { data } = useForecast();
   const { forecastChart, bestSellers, stockAlerts, hasData } = data;
 
@@ -33,7 +33,7 @@ export default function DashboardHome() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
           <p className="text-muted-foreground mt-1">
-            {hasData ? "Sistem aktif. Memantau 24/7." : "Menunggu data. Silakan upload CSV."}
+            {hasData ? "System active. Monitoring 24/7." : "Awaiting data. Please upload a CSV."}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
@@ -47,12 +47,12 @@ export default function DashboardHome() {
       {!hasData ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
           <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold">Data Operasional Kosong</h3>
+          <h3 className="text-lg font-semibold">No Operational Data</h3>
           <Button 
             className="mt-6" 
-            onClick={() => navigate('/dashboard/forecaster')} // PERBAIKAN: Gunakan navigate
+            onClick={() => navigate('/dashboard/forecaster')} // FIX: Use navigate
           >
-            Buka Intelligence Engine
+            Open Intelligence Engine
           </Button>
         </div>
       ) : (
@@ -74,20 +74,20 @@ export default function DashboardHome() {
                   variant="outline"
                   className="w-full mt-2"
                   onClick={() => {
-                    const prompt = `Butuh strategi cuci gudang untuk: ${deadstockPlaceholder.map(i => i.name).join(', ')}`;
+                    const prompt = `Need a clearance strategy for: ${deadstockPlaceholder.map(i => i.name).join(', ')}`;
                     localStorage.setItem('assistant_prompt', prompt);
-                    navigate('/dashboard/assistant'); // PERBAIKAN: Gunakan navigate
+                    navigate('/dashboard/assistant'); // FIX: Use navigate
                   }}
                 >
-                  Buat Strategi Cuci Gudang
+                  Create Clearance Strategy
                 </Button>
               </div>
             </div>
             
-            {/* ... Status Gudang Card ... */}
+            {/* ... Warehouse Status Card ... */}
           </div>
 
-          {/* ... Proyeksi Strategis 2026 ... */}
+          {/* ... Strategic Projection 2026 ... */}
 
           <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
             <div className="p-6 bg-secondary/30 border-b">
@@ -100,11 +100,11 @@ export default function DashboardHome() {
                   <div className="flex gap-3">
                     <Button 
                       variant="outline" 
-                      onClick={() => navigate('/dashboard/assistant')} // PERBAIKAN: Gunakan navigate
+                      onClick={() => navigate('/dashboard/assistant')} // FIX: Use navigate
                     >
-                      Cek Kontrak
+                      Check Contract
                     </Button>
-                    <Button onClick={() => handleRestock(alert.product)}>Pesan Sekarang</Button>
+                    <Button onClick={() => handleRestock(alert.product)}>Order Now</Button>
                   </div>
                 </div>
               ))}

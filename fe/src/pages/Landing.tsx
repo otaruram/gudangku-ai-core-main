@@ -27,21 +27,21 @@ export default function Landing() {
           {/* Desktop Nav */}
           <nav className="hidden items-center gap-8 md:flex">
             <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              Fitur
+              Features
             </a>
             <a href="#about" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              Tentang
+              About
             </a>
           </nav>
 
           {/* Desktop CTAs */}
           <div className="hidden items-center gap-3 md:flex">
             <Button variant="ghost" asChild>
-              <Link to="/login">Masuk</Link>
+              <Link to="/login">Sign In</Link>
             </Button>
             <Button variant="hero" asChild>
               <Link to="/login">
-                Coba Sekarang
+                Try Now
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -67,21 +67,21 @@ export default function Landing() {
                 className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Fitur
+                Features
               </a>
               <a
                 href="#about"
                 className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Tentang
+                About
               </a>
               <div className="mt-2 flex flex-col gap-2">
                 <Button variant="outline" asChild className="w-full">
-                  <Link to="/login">Masuk</Link>
+                  <Link to="/login">Sign In</Link>
                 </Button>
                 <Button variant="hero" asChild className="w-full">
-                  <Link to="/login">Coba Sekarang</Link>
+                  <Link to="/login">Try Now</Link>
                 </Button>
               </div>
             </nav>
@@ -103,21 +103,21 @@ export default function Landing() {
 
           {/* Main Headline */}
           <h1 className="mx-auto max-w-4xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
-            Prediksi Stok, Tanya Dokumen.{" "}
-            <span className="text-gradient-emerald">Semua di Satu Tempat.</span>
+            Predict Stock, Ask Documents.{" "}
+            <span className="text-gradient-emerald">All in One Place.</span>
           </h1>
 
           {/* Subheadline */}
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg md:text-xl">
-            Dulu, gudang adalah tempat yang penuh dengan misteri. Kami membangun Gudangku
-            untuk memberikan 'otak' pada gudang Anda. Bukan sekadar mencatat, tapi memprediksi masa depan.
+            Warehouses used to be full of mystery. We built Gudangku
+            to give your warehouse a 'brain'. Not just recording, but predicting the future.
           </p>
 
           {/* CTA Buttons */}
           <div className="mt-8 flex justify-center sm:mt-10">
             <Button variant="hero" size="lg" className="w-full sm:w-auto sm:px-8" asChild>
               <Link to="/login">
-                Mulai Gratis
+                Start Free
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
@@ -154,9 +154,9 @@ export default function Landing() {
                 <div className="flex-1 p-3 sm:p-6">
                   <div className="grid gap-2 sm:gap-4 sm:grid-cols-3">
                     {[
-                      { label: "Total Stok", value: "12,847", trend: "+5.2%" },
-                      { label: "Akan Habis", value: "23", trend: "3 hari" },
-                      { label: "Akurasi AI", value: "94.7%", trend: "+2.1%" },
+                      { label: "Total Stock", value: "12,847", trend: "+5.2%" },
+                      { label: "Running Low", value: "23", trend: "3 days" },
+                      { label: "AI Accuracy", value: "94.7%", trend: "+2.1%" },
                     ].map((card, i) => (
                       <div key={i} className="rounded-lg border border-border bg-card p-2 shadow-sm sm:p-4">
                         <p className="text-[10px] text-muted-foreground sm:text-xs">{card.label}</p>
@@ -174,7 +174,7 @@ export default function Landing() {
             <div className="absolute -right-4 -top-4 hidden animate-float rounded-lg border border-accent/20 bg-card p-3 shadow-lg sm:block">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 animate-pulse rounded-full bg-accent" />
-                <span className="text-xs font-medium">Prediksi aktif</span>
+                <span className="text-xs font-medium">Prediction active</span>
               </div>
             </div>
           </div>
@@ -186,10 +186,10 @@ export default function Landing() {
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
-              Fitur yang Membuat Gudang Anda <span className="text-gradient-emerald">Cerdas</span>
+              Features that Make Your Warehouse <span className="text-gradient-emerald">Smart</span>
             </h2>
             <p className="mt-3 text-sm text-muted-foreground sm:mt-4 sm:text-base">
-              Teknologi AI lokal yang menjaga data Anda tetap aman
+              Local AI technology that keeps your data safe
             </p>
           </div>
 
@@ -198,22 +198,22 @@ export default function Landing() {
               {
                 icon: TrendingUp,
                 title: "Smart Forecaster",
-                description: "Prediksi stok dengan AI Prophet. Tahu kapan barang habis sebelum terjadi.",
+                description: "Predict stock with AI Prophet. Know when items run out before it happens.",
               },
               {
                 icon: MessageSquare,
                 title: "Doc Assistant",
-                description: "Tanya jawab dokumen SOP dengan Ollama. Data tetap lokal, privasi terjaga.",
+                description: "Q&A on SOP documents with Ollama. Data stays local, privacy preserved.",
               },
               {
                 icon: Box,
                 title: "Real-time Tracking",
-                description: "Monitor stok gudang secara real-time. Notifikasi instan untuk barang kritis.",
+                description: "Monitor warehouse stock in real-time. Instant notifications for critical items.",
               },
               {
                 icon: Shield,
                 title: "Data Privacy",
-                description: "Semua data diproses secara lokal. Tidak ada yang dikirim ke cloud.",
+                description: "All data is processed locally. Nothing is sent to the cloud.",
               },
             ].map((feature, i) => (
               <div
@@ -236,14 +236,14 @@ export default function Landing() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
         <div className="container relative z-10 mx-auto px-4 text-center sm:px-6">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
-            Siap untuk Transformasi <span className="text-gradient-emerald">Gudang Anda</span>?
+            Ready to Transform <span className="text-gradient-emerald">Your Warehouse</span>?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:mt-4 sm:text-base">
-            Bergabung dengan ratusan perusahaan yang sudah menggunakan Gudangku untuk operasi supply chain mereka.
+            Join hundreds of companies already using Gudangku for their supply chain operations.
           </p>
           <Button variant="hero" size="lg" className="mt-6 w-full sm:mt-8 sm:w-auto sm:px-10" asChild>
             <Link to="/login">
-              Mulai Sekarang
+              Get Started
               <ArrowRight className="h-5 w-5" />
             </Link>
           </Button>

@@ -55,7 +55,7 @@ export function MessageList({ messages, isTyping, messagesEndRef }: MessageListP
                                     "mt-1 text-[10px]",
                                     message.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground"
                                 )}>
-                                    {message.timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                    {message.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
                             </div>
                         </div>
