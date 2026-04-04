@@ -14,6 +14,7 @@ import DashboardHome from "./pages/dashboard/DashboardHome";
 import Forecaster from "./pages/dashboard/Forecaster";
 import DocAssistant from "./pages/dashboard/DocAssistant";
 import History from "./pages/dashboard/History";
+import UploadCSV from "./pages/dashboard/UploadCSV";
 import NotFound from "./pages/NotFound";
 
 // Auth
@@ -37,6 +38,7 @@ const App = () => (
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<DashboardLayout />}>
                     <Route index element={<DashboardHome />} />
+                    <Route path="upload" element={<UploadCSV />} />
                     <Route path="forecaster" element={<Forecaster />} />
                     <Route path="assistant" element={<DocAssistant />} />
                     <Route path="history" element={<History />} />

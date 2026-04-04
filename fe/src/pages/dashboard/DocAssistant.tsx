@@ -32,7 +32,7 @@ export default function DocAssistant() {
           <p className="text-sm text-muted-foreground sm:text-base">
             {csvLoaded
               ? "AI assistant with your warehouse data context"
-              : "Upload a CSV in Forecaster to enable data-aware answers"}
+              : "Upload a CSV first to enable data-aware answers"}
           </p>
           {csvLoaded && (
             <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-500">

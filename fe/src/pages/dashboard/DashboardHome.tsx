@@ -67,10 +67,10 @@ export default function DashboardHome() {
           </div>
           <Button 
             className="mt-6" 
-            onClick={() => navigate('/dashboard/forecaster')}
+            onClick={() => navigate('/dashboard/upload')}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Upload CSV in Forecaster
+            Upload CSV Data
           </Button>
         </div>
       ) : (

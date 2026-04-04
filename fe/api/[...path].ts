@@ -37,15 +37,16 @@ export default async function handler(request: Request) {
   }
 
   try {
+    // Buffer body as ArrayBuffer for reliable forwarding (avoids stream/duplex issues)
+    let body: ArrayBuffer | undefined;
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      body = await request.arrayBuffer();
+    }
+
     const response = await fetch(targetUrl, {
       method: request.method,
       headers,
-      body:
-        request.method !== "GET" && request.method !== "HEAD"
-          ? request.body
-          : undefined,
-      // @ts-expect-error -- required for streaming body in edge runtime
-      duplex: "half",
+      body,
     });
 
     // Forward response with CORS headers

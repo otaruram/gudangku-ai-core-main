@@ -12,6 +12,7 @@ import {
   Menu,
   Bell,
   X,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navItems = [
+  { title: "Upload CSV", href: "/dashboard/upload", icon: Upload },
   { title: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { title: "Forecaster", href: "/dashboard/forecaster", icon: TrendingUp },
   { title: "Doc Assistant", href: "/dashboard/assistant", icon: MessageSquare },
