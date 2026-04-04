@@ -29,6 +29,9 @@ interface GeminiResponse {
   }>;
 }
 
+// Bump when prompt/format/token settings change to avoid stale cached responses.
+const CACHE_VERSION = "v2_2048_tokens";
+
 /**
  * Call Gemini 2.5 Flash via Sumopod OpenAI-compatible API, with Redis caching.
  * If an identical query was answered within TTL (4h), return cached result.
@@ -38,7 +41,7 @@ export async function callGemini(
   context: string = ""
 ): Promise<{ text: string; cached: boolean }> {
   // 1. Check Redis cache
-  const cacheKey = `${userPrompt}::${context}`.trim();
+  const cacheKey = `${CACHE_VERSION}::${userPrompt}::${context}`.trim();
   const cached = await getCachedResponse(cacheKey);
   if (cached) {
     return { text: cached, cached: true };
