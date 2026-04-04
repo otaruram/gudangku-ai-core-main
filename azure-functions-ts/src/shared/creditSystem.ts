@@ -54,7 +54,8 @@ export async function consumeCredits(
   let user: UserDocument;
   try {
     const { resource } = await container.item(userId, userId).read<UserDocument>();
-    user = resource!;
+    if (!resource) throw { code: 404 };
+    user = resource;
   } catch (err: any) {
     if (err.code === 404) {
       // First-time user — bootstrap document
