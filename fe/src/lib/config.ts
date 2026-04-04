@@ -1,1 +1,2 @@
-export const API_URL = import.meta.env.VITE_API_URL || "https://gudangku-ai.onrender.com/api";
+// API calls go through Vercel Edge proxy (/api) — real backend URL is server-side only
+export const API_URL = "/api";

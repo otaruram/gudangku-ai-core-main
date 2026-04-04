@@ -52,7 +52,7 @@ export function useChat() {
             }
 
             // Use production backend URL - mobile devices need absolute URL
-            const API_URL = import.meta.env.VITE_API_URL || "https://gudangku-ai.onrender.com/api";
+            const { API_URL } = await import("@/lib/config");
 
             const response = await fetch(`${API_URL}/chat`, {
                 method: "POST",

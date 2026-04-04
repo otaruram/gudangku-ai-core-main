@@ -13,7 +13,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "rec
 
 
 // API URL
-const API_URL = import.meta.env.VITE_API_URL || "https://gudangku-ai.onrender.com/api";
+import { API_URL } from "@/lib/config";
 
 type HistoryType = "all" | "forecast" | "chat";
 

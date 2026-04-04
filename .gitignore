@@ -4,11 +4,21 @@ __pycache__/
 *.py[cod]
 venv/
 .env
+.env.*
 
 # Node
 node_modules/
 dist/
 .env.local
+
+# Azure Functions
+local.settings.json
+
+# Legacy docs (contain old URLs)
+DEPLOYMENT_FIX_SUMMARY.md
+DEPLOYMENT_GUIDE.md
+MOBILE_FIX_SUMMARY.md
+SUPABASE_REDIRECT_FIX.md
 
 # IDE
 .vscode/
