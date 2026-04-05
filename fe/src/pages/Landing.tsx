@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Box, TrendingUp, MessageSquare, Shield, Menu, X } from "lucide-react";
+import { ArrowRight, Box, TrendingUp, MessageSquare, Shield, Menu, X, Zap, BarChart3, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useState, useEffect } from "react";
@@ -7,47 +7,57 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [typedCommand, setTypedCommand] = useState("");
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
     if (!loading && user) {
       navigate("/dashboard", { replace: true });
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    const fullCommand = "$ forecast --sku 'Beras Premium' --horizon 30 --alert-mode smart";
+    let i = 0;
+    const timer = setInterval(() => {
+      i += 1;
+      setTypedCommand(fullCommand.slice(0, i));
+      if (i >= fullCommand.length) {
+        clearInterval(timer);
+      }
+    }, 35);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
+    <div className="min-h-screen" style={{ backgroundColor: "var(--color-bg-primary)", color: "var(--color-text-primary)" }}>
+      <header className="fixed top-0 z-50 w-full border-b" style={{ borderColor: "var(--color-border)", backgroundColor: "rgba(15, 17, 23, 0.95)", backdropFilter: "blur(8px)" }}>
         <div className="container mx-auto flex h-14 items-center justify-between px-4 sm:h-16 sm:px-6">
           <Logo />
 
-          {/* Desktop Nav */}
           <nav className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <a href="#features" className="text-sm transition-colors" style={{ color: "var(--color-text-muted)" }}>
               Features
             </a>
-            <a href="#about" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              About
+            <a href="#how-it-works" className="text-sm transition-colors" style={{ color: "var(--color-text-muted)" }}>
+              How It Works
             </a>
           </nav>
 
-          {/* Desktop CTAs */}
           <div className="hidden items-center gap-3 md:flex">
-            <Button variant="ghost" asChild>
-              <Link to="/login">Sign In</Link>
+            <Button variant="ghost" asChild className="border-0">
+              <Link to="/login" style={{ color: "var(--color-text-secondary)" }}>Sign In</Link>
             </Button>
-            <Button variant="hero" asChild>
+            <Button asChild style={{ backgroundColor: "var(--color-accent)", color: "white" }}>
               <Link to="/login">
-                Try Now
+                Start Free
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -58,30 +68,31 @@ export default function Landing() {
           </Button>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-border bg-background px-4 py-4 md:hidden">
-            <nav className="flex flex-col gap-3">
+          <div className="border-t md:hidden" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-secondary)" }}>
+            <nav className="flex flex-col gap-2 px-4 py-4">
               <a
                 href="#features"
-                className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className="rounded-lg px-3 py-2 text-sm transition-colors"
+                style={{ color: "var(--color-text-secondary)" }}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </a>
               <a
-                href="#about"
-                className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                href="#how-it-works"
+                className="rounded-lg px-3 py-2 text-sm transition-colors"
+                style={{ color: "var(--color-text-secondary)" }}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                About
+                How It Works
               </a>
-              <div className="mt-2 flex flex-col gap-2">
-                <Button variant="outline" asChild className="w-full">
+              <div className="mt-3 flex flex-col gap-2 border-t" style={{ borderColor: "var(--color-border)" }}>
+                <Button variant="outline" asChild className="mt-2 w-full border-0" style={{ backgroundColor: "var(--color-bg-hover)", color: "var(--color-text-primary)" }}>
                   <Link to="/login">Sign In</Link>
                 </Button>
-                <Button variant="hero" asChild className="w-full">
-                  <Link to="/login">Try Now</Link>
+                <Button asChild className="w-full" style={{ backgroundColor: "var(--color-accent)", color: "white" }}>
+                  <Link to="/login">Start Free</Link>
                 </Button>
               </div>
             </nav>
@@ -89,173 +100,133 @@ export default function Landing() {
         )}
       </header>
 
-      {/* Hero Section */}
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden pt-14 sm:pt-16">
-        {/* Background Glow */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
-
         <div className="container relative z-10 mx-auto px-4 py-16 text-center sm:px-6 sm:py-24">
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 sm:mb-8 sm:px-4 sm:py-1.5">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-            <span className="text-xs font-medium text-muted-foreground">Powered by Local AI</span>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1 sm:mb-8 sm:px-4 sm:py-1.5" style={{ borderColor: "var(--color-accent)", backgroundColor: "rgba(59, 130, 246, 0.1)" }}>
+            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: "var(--color-safe)", animation: "pulse-glow 2s infinite" }} />
+            <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Powered by Azure AI</span>
           </div>
 
-          {/* Main Headline */}
-          <h1 className="mx-auto max-w-4xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
-            Predict Stock, Ask Documents.{" "}
-            <span className="text-gradient-emerald">All in One Place.</span>
+          <h1 className="mx-auto max-w-4xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
+            Inventory yang Pintar.{" "}
+            <span style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              Prediksi yang Akurat.
+            </span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:mt-6 sm:text-lg md:text-xl">
-            Warehouses used to be full of mystery. We built Gudangku
-            to give your warehouse a 'brain'. Not just recording, but predicting the future.
+          <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg" style={{ color: "var(--color-text-secondary)" }}>
+            Gudangku menggunakan AI untuk memprediksi stok dan memberikan insights actionable.
+            Tanya dokumen, analisis tren, dan terima briefing otomatis di Telegram.
           </p>
 
-          {/* CTA Buttons */}
+          <div
+            className="mx-auto mt-6 w-full max-w-3xl rounded-xl border px-4 py-3 text-left font-mono text-xs sm:text-sm"
+            style={{ borderColor: "var(--color-border)", backgroundColor: "rgba(6, 182, 212, 0.07)", color: "var(--color-text-secondary)" }}
+          >
+            <span>{typedCommand}</span>
+            <span
+              aria-hidden="true"
+              className="ml-1 inline-block w-2"
+              style={{ borderRight: "2px solid var(--color-info)", animation: "pulse-glow 0.9s infinite" }}
+            />
+          </div>
+
           <div className="mt-8 flex justify-center sm:mt-10">
-            <Button variant="hero" size="lg" className="w-full sm:w-auto sm:px-8" asChild>
+            <Button size="lg" className="w-full border-0 sm:w-auto sm:px-8" style={{ backgroundColor: "var(--color-accent)", color: "white" }} asChild>
               <Link to="/login">
-                Start Free
+                Mulai Gratis
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
           </div>
-
-          {/* Dashboard Preview */}
-          <div className="relative mx-auto mt-12 max-w-5xl sm:mt-20">
-            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
-              {/* Browser Header */}
-              <div className="flex items-center gap-2 border-b border-border bg-secondary/50 px-3 py-2 sm:px-4 sm:py-3">
-                <div className="flex gap-1.5">
-                  <div className="h-2.5 w-2.5 rounded-full bg-destructive/60 sm:h-3 sm:w-3" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-warning/60 sm:h-3 sm:w-3" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-accent/60 sm:h-3 sm:w-3" />
-                </div>
-                <div className="flex-1 text-center text-[10px] text-muted-foreground sm:text-xs">
-                  app.gudangku.ai
-                </div>
-              </div>
-
-              {/* Dashboard Preview Content */}
-              <div className="flex h-48 bg-background sm:h-80">
-                {/* Mini Sidebar - Hidden on very small screens */}
-                <div className="hidden w-12 shrink-0 bg-foreground p-2 sm:block sm:w-16 sm:p-3">
-                  <div className="mb-3 h-6 w-6 rounded bg-sidebar-accent sm:mb-4 sm:h-8 sm:w-8" />
-                  <div className="space-y-2 sm:space-y-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className={`h-6 w-6 rounded sm:h-8 sm:w-8 ${i === 1 ? 'bg-accent' : 'bg-sidebar-accent'}`} />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Preview Cards */}
-                <div className="flex-1 p-3 sm:p-6">
-                  <div className="grid gap-2 sm:gap-4 sm:grid-cols-3">
-                    {[
-                      { label: "Total Stock", value: "12,847", trend: "+5.2%" },
-                      { label: "Running Low", value: "23", trend: "3 days" },
-                      { label: "AI Accuracy", value: "94.7%", trend: "+2.1%" },
-                    ].map((card, i) => (
-                      <div key={i} className="rounded-lg border border-border bg-card p-2 shadow-sm sm:p-4">
-                        <p className="text-[10px] text-muted-foreground sm:text-xs">{card.label}</p>
-                        <p className="mt-0.5 text-lg font-bold sm:mt-1 sm:text-2xl">{card.value}</p>
-                        <p className="mt-0.5 text-[10px] text-accent sm:mt-1 sm:text-xs">{card.trend}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-2 h-16 rounded-lg border border-border bg-secondary/30 sm:mt-4 sm:h-32" />
-                </div>
-              </div>
-            </div>
-
-            {/* Floating Elements - Hidden on mobile */}
-            <div className="absolute -right-4 -top-4 hidden animate-float rounded-lg border border-accent/20 bg-card p-3 shadow-lg sm:block">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 animate-pulse rounded-full bg-accent" />
-                <span className="text-xs font-medium">Prediction active</span>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="border-t border-border bg-secondary/30 py-16 sm:py-24">
+      <section id="features" className="border-t py-16 sm:py-24" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-secondary)" }}>
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
-              Features that Make Your Warehouse <span className="text-gradient-emerald">Smart</span>
+              Fitur untuk <span style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Warehouse Pintar</span>
             </h2>
-            <p className="mt-3 text-sm text-muted-foreground sm:mt-4 sm:text-base">
-              Local AI technology that keeps your data safe
+            <p className="mt-4 text-sm sm:text-base" style={{ color: "var(--color-text-secondary)" }}>
+              Teknologi AI lokal yang menjaga data Anda tetap aman
             </p>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:mt-16 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-4 sm:mt-16 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
-              {
-                icon: TrendingUp,
-                title: "Smart Forecaster",
-                description: "Predict stock with AI Prophet. Know when items run out before it happens.",
-              },
-              {
-                icon: MessageSquare,
-                title: "Doc Assistant",
-                description: "Q&A on SOP documents with Ollama. Data stays local, privacy preserved.",
-              },
-              {
-                icon: Box,
-                title: "Real-time Tracking",
-                description: "Monitor warehouse stock in real-time. Instant notifications for critical items.",
-              },
-              {
-                icon: Shield,
-                title: "Data Privacy",
-                description: "All data is processed locally. Nothing is sent to the cloud.",
-              },
+              { icon: TrendingUp, title: "Prediksi Cerdas", description: "Forecast stok dengan AI. Tahu kapan barang habis sebelum terjadi.", color: "var(--color-info)" },
+              { icon: MessageSquare, title: "Asisten Dokumen", description: "Tanya SOP atau kebijakan dokumen dengan NLP. Data tetap lokal.", color: "var(--color-accent)" },
+              { icon: Box, title: "Tracking Real-time", description: "Monitor stok real-time. Alert instant untuk item kritis.", color: "var(--color-critical)" },
+              { icon: Shield, title: "Privasi Terjamin", description: "Semua diproses lokal. Tidak ada data yang keluar.", color: "var(--color-safe)" },
+              { icon: Zap, title: "Rekomendasi Pesanan", description: "Hitung EOQ & ROP otomatis berdasarkan historical trend.", color: "var(--color-warning)" },
+              { icon: BarChart3, title: "Analytics Mendalam", description: "Dashboard visual dengan insights produk terlaku & deadstock.", color: "var(--color-info)" },
+              { icon: MessageSquare, title: "Telegram Integration", description: "Terima briefing otomatis & tanya stok via Telegram.", color: "var(--color-accent)" },
+              { icon: Lock, title: "Keamanan Enterprise", description: "JWT auth, rate limiting, audit log ter-enkripsi.", color: "var(--color-safe)" },
             ].map((feature, i) => (
-              <div
-                key={i}
-                className="group rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:border-accent/50 hover:shadow-lg sm:p-6"
-              >
-                <div className="mb-3 inline-flex rounded-lg bg-accent/10 p-2 text-accent transition-colors group-hover:bg-accent group-hover:text-accent-foreground sm:mb-4 sm:p-3">
+              <div key={i} className="group rounded-xl border p-4 transition-all sm:p-6 hover-lift" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}>
+                <div className="mb-3 inline-flex rounded-lg p-2 sm:mb-4 sm:p-3" style={{ backgroundColor: `${feature.color}20`, color: feature.color }}>
                   <feature.icon className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <h3 className="mb-1.5 text-base font-semibold sm:mb-2 sm:text-lg">{feature.title}</h3>
-                <p className="text-xs text-muted-foreground sm:text-sm">{feature.description}</p>
+                <h3 className="mb-1.5 text-base font-semibold sm:mb-2 sm:text-lg" style={{ color: "var(--color-text-primary)" }}>{feature.title}</h3>
+                <p className="text-xs sm:text-sm" style={{ color: "var(--color-text-muted)" }}>{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
+      <section id="how-it-works" className="border-t py-16 sm:py-24" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-primary)" }}>
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl" style={{ color: "var(--color-text-primary)" }}>
+              How It <span style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Works</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-base" style={{ color: "var(--color-text-secondary)" }}>
+              3 langkah sederhana untuk ubah data stok jadi keputusan yang actionable.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:mt-14 sm:gap-6 md:grid-cols-3">
+            {[
+              { step: "01", title: "Upload CSV", desc: "Upload data penjualan dan stok. Sistem otomatis deteksi kolom penting tanpa setup ribet.", tone: "var(--color-info)" },
+              { step: "02", title: "AI Forecast + Alert", desc: "Gudangku hitung prediksi demand dan status stok (critical, warning, safe) per produk.", tone: "var(--color-warning)" },
+              { step: "03", title: "Act in Real Time", desc: "Pantau dashboard, konsultasi Doc Assistant, dan kirim aksi via Telegram dalam hitungan detik.", tone: "var(--color-safe)" },
+            ].map((item) => (
+              <div key={item.step} className="rounded-xl border p-5 sm:p-6 hover-lift" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}>
+                <div className="mb-4 inline-flex rounded-lg px-3 py-1 text-xs font-bold" style={{ backgroundColor: `${item.tone}20`, color: item.tone }}>
+                  STEP {item.step}
+                </div>
+                <h3 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>{item.title}</h3>
+                <p className="mt-2 text-sm" style={{ color: "var(--color-text-muted)" }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden py-16 sm:py-24" style={{ backgroundColor: "var(--color-bg-primary)" }}>
         <div className="container relative z-10 mx-auto px-4 text-center sm:px-6">
           <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl">
-            Ready to Transform <span className="text-gradient-emerald">Your Warehouse</span>?
+            Siap untuk Transform <span style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Warehouse Anda?</span>
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:mt-4 sm:text-base">
-            Join hundreds of companies already using Gudangku for their supply chain operations.
+          <p className="mx-auto mt-4 max-w-xl text-sm sm:mt-6 sm:text-base" style={{ color: "var(--color-text-secondary)" }}>
+            Bergabung dengan ratusan UMKM yang sudah menggunakan Gudangku untuk supply chain mereka.
           </p>
-          <Button variant="hero" size="lg" className="mt-6 w-full sm:mt-8 sm:w-auto sm:px-10" asChild>
+          <Button size="lg" className="mt-6 w-full border-0 sm:mt-8 sm:w-auto sm:px-10" style={{ backgroundColor: "var(--color-accent)", color: "white" }} asChild>
             <Link to="/login">
-              Get Started
+              Mulai Sekarang
               <ArrowRight className="h-5 w-5" />
             </Link>
           </Button>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-secondary/30 py-8 sm:py-12">
+      <footer className="border-t py-8 sm:py-12" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-secondary)" }}>
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
           <Logo />
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            © 2024 Gudangku. All rights reserved.
+          <p className="text-xs sm:text-sm" style={{ color: "var(--color-text-muted)" }}>
+            © 2026 Gudangku. All rights reserved.
           </p>
         </div>
       </footer>

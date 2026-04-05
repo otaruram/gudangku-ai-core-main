@@ -129,8 +129,8 @@ export default function History() {
       {/* Page Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold sm:text-2xl">Strategic Memory</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">AI Decision & Operations Audit Trail</p>
+          <h1 className="text-xl font-bold sm:text-2xl" style={{ color: "var(--color-text-primary)" }}>Strategic Memory</h1>
+          <p className="text-sm sm:text-base" style={{ color: "var(--color-text-secondary)" }}>AI Decision & Operations Audit Trail</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={fetchData}>
@@ -175,12 +175,12 @@ export default function History() {
           { label: "Average Accuracy", value: stats?.avg_accuracy ?? "-", icon: TrendingUp },
           { label: "Response Time", value: stats?.response_time ?? "-", icon: Clock },
         ].map((stat, i) => (
-          <div key={i} className="rounded-lg border border-border bg-card p-3 sm:p-4">
+          <div key={i} className="rounded-lg border p-3 sm:p-4" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}>
             <div className="flex items-center gap-2">
-              <stat.icon className="h-3 w-3 text-muted-foreground sm:h-4 sm:w-4" />
-              <span className="text-[10px] text-muted-foreground sm:text-xs">{stat.label}</span>
+              <stat.icon className="h-3 w-3 sm:h-4 sm:w-4" style={{ color: "var(--color-text-muted)" }} />
+              <span className="text-[10px] sm:text-xs" style={{ color: "var(--color-text-muted)" }}>{stat.label}</span>
             </div>
-            <p className="mt-1 text-lg font-bold sm:mt-2 sm:text-2xl">{stat.value}</p>
+            <p className="mt-1 text-lg font-bold sm:mt-2 sm:text-2xl" style={{ color: "var(--color-text-primary)" }}>{stat.value}</p>
           </div>
         ))}
       </div>
@@ -216,7 +216,7 @@ export default function History() {
       </div>
 
       {/* History List */}
-      <div className="rounded-xl border border-border bg-card min-h-[300px]">
+      <div className="rounded-xl border min-h-[300px]" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}>
         {loading && items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="w-8 h-8 animate-spin mb-2" />
@@ -228,11 +228,12 @@ export default function History() {
             <p className="text-xs">Try uploading a CSV or chatting with the Assistant.</p>
           </div>
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
             {filteredData.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-3 p-3 transition-colors hover:bg-secondary/50 sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                className="flex flex-col gap-3 p-3 transition-colors sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                style={{ backgroundColor: "transparent" }}
               >
                 {/* Left Section */}
                 <div className="flex items-start gap-3 sm:items-center sm:gap-4">

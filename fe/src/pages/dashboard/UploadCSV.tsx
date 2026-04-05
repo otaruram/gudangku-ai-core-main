@@ -171,8 +171,8 @@ export default function UploadCSV() {
       {/* Header */}
       <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Upload CSV</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "var(--color-text-primary)" }}>Upload CSV</h1>
+          <p className="mt-1" style={{ color: "var(--color-text-secondary)" }}>
             Upload your inventory data to activate all features
           </p>
         </div>
@@ -189,13 +189,16 @@ export default function UploadCSV() {
       {/* Success State */}
       {hasData && (
         <div className="max-w-2xl mx-auto">
-          <div className="rounded-xl border-2 border-emerald-500/30 bg-emerald-500/5 p-8 text-center">
-            <CheckCircle2 className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold">Data Loaded Successfully</h2>
-            <p className="text-muted-foreground mt-2">
+          <div
+            className="rounded-xl border p-8 text-center"
+            style={{ borderColor: "var(--color-safe)", backgroundColor: "rgba(16, 185, 129, 0.08)" }}
+          >
+            <CheckCircle2 className="h-16 w-16 mx-auto mb-4" style={{ color: "var(--color-safe)" }} />
+            <h2 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>Data Loaded Successfully</h2>
+            <p className="mt-2" style={{ color: "var(--color-text-secondary)" }}>
               {csvFileName ? `File: ${csvFileName}` : "Your CSV data is active"}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
               All features are now unlocked and ready to use.
             </p>
 
@@ -209,11 +212,12 @@ export default function UploadCSV() {
                 <button
                   key={item.href}
                   onClick={() => navigate(item.href)}
-                  className="rounded-lg border bg-card p-4 text-left hover:bg-secondary/50 transition-colors group"
+                  className="rounded-lg border p-4 text-left transition-all hover:-translate-y-0.5 group"
+                  style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}
                 >
-                  <p className="font-semibold text-sm">{item.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
-                  <ArrowRight className="h-4 w-4 mt-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  <p className="font-semibold text-sm" style={{ color: "var(--color-text-primary)" }}>{item.title}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>{item.desc}</p>
+                  <ArrowRight className="h-4 w-4 mt-2 transition-colors" style={{ color: "var(--color-text-muted)" }} />
                 </button>
               ))}
             </div>
@@ -246,9 +250,9 @@ export default function UploadCSV() {
             />
             {loading && (
               <div className="text-center mt-6 space-y-2">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-black border-r-transparent"></div>
-                <p className="text-sm font-medium">Processing CSV Data...</p>
-                <p className="text-xs text-muted-foreground">
+                <div className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-r-transparent" style={{ borderColor: "var(--color-info)", borderRightColor: "transparent" }}></div>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>Processing CSV Data...</p>
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   Analyzing • Forecasting • Building Insights
                 </p>
               </div>
@@ -256,9 +260,12 @@ export default function UploadCSV() {
           </div>
 
           {/* CSV Format Guide */}
-          <div className="mt-8 p-4 bg-secondary/20 rounded-lg text-xs text-muted-foreground">
+          <div
+            className="mt-8 p-4 rounded-lg text-xs"
+            style={{ backgroundColor: "var(--color-bg-card)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)" }}
+          >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
-              <p className="font-semibold text-foreground">Required CSV Format:</p>
+              <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>Required CSV Format:</p>
               <div className="flex gap-2">
                 <Button
                   variant="default"
@@ -317,35 +324,35 @@ export default function UploadCSV() {
           </div>
 
           {/* Feature Activation Info */}
-          <div className="mt-6 rounded-lg border p-4">
-            <h3 className="font-semibold text-sm mb-3">What gets activated after upload:</h3>
+          <div className="mt-6 rounded-lg border p-4" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}>
+            <h3 className="font-semibold text-sm mb-3" style={{ color: "var(--color-text-primary)" }}>What gets activated after upload:</h3>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="flex items-start gap-2">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1 shrink-0" />
+                <div className="w-2 h-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: "var(--color-info)" }} />
                 <div>
-                  <p className="font-medium">Dashboard</p>
-                  <p className="text-muted-foreground">Live monitoring, stock alerts</p>
+                  <p className="font-medium" style={{ color: "var(--color-text-primary)" }}>Dashboard</p>
+                  <p style={{ color: "var(--color-text-muted)" }}>Live monitoring, stock alerts</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1 shrink-0" />
+                <div className="w-2 h-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: "var(--color-info)" }} />
                 <div>
-                  <p className="font-medium">Forecaster</p>
-                  <p className="text-muted-foreground">Sales prediction charts</p>
+                  <p className="font-medium" style={{ color: "var(--color-text-primary)" }}>Forecaster</p>
+                  <p style={{ color: "var(--color-text-muted)" }}>Sales prediction charts</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1 shrink-0" />
+                <div className="w-2 h-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: "var(--color-info)" }} />
                 <div>
-                  <p className="font-medium">Doc Assistant</p>
-                  <p className="text-muted-foreground">AI-powered data analysis</p>
+                  <p className="font-medium" style={{ color: "var(--color-text-primary)" }}>Doc Assistant</p>
+                  <p style={{ color: "var(--color-text-muted)" }}>AI-powered data analysis</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground mt-1 shrink-0" />
+                <div className="w-2 h-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: "var(--color-info)" }} />
                 <div>
-                  <p className="font-medium">History</p>
-                  <p className="text-muted-foreground">Track forecast & chat records</p>
+                  <p className="font-medium" style={{ color: "var(--color-text-primary)" }}>History</p>
+                  <p style={{ color: "var(--color-text-muted)" }}>Track forecast & chat records</p>
                 </div>
               </div>
             </div>

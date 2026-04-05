@@ -1,0 +1,190 @@
+/* GUDANGKU DESIGN SYSTEM - April 2026 */
+
+:root {
+  /* Base Colors - Warehouse Professional Theme */
+  --color-dark-primary: #1a1d23;
+  --color-dark-secondary: #25272f;
+  --color-dark-tertiary: #2f3139;
+  
+  /* Status Colors - Universal Language */
+  --color-critical: #ef4444;    /* Deep Red - Urgent */
+  --color-warning: #f59e0b;     /* Amber - Caution */
+  --color-safe: #10b981;        /* Teal - All Good */
+  --color-info: #06b6d4;        /* Cyan - Forecast */
+  
+  /* Accent Colors */
+  --color-accent: #3b82f6;      /* Blue - Primary Action */
+  --color-accent-hover: #2563eb;
+  --color-accent-light: #3b82f6;
+  
+  /* Text Colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d1d5db;
+  --color-text-muted: #9ca3af;
+  
+  /* Backgrounds */
+  --color-bg-primary: #0f1117;
+  --color-bg-secondary: #1a1d23;
+  --color-bg-card: #25272f;
+  --color-bg-hover: #2f3139;
+  
+  /* Borders */
+  --color-border: #3f4450;
+  --color-border-light: #4f5568;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 32px;
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Color Classes */
+.bg-dark-primary { background-color: var(--color-bg-primary); }
+.bg-dark-secondary { background-color: var(--color-bg-secondary); }
+.bg-dark-card { background-color: var(--color-bg-card); }
+
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+
+.border-default { border-color: var(--color-border); }
+
+/* Status Badge Colors */
+.badge-critical {
+  background-color: var(--color-critical);
+  color: white;
+}
+.badge-warning {
+  background-color: var(--color-warning);
+  color: #1a1a1a;
+}
+.badge-safe {
+  background-color: var(--color-safe);
+  color: white;
+}
+.badge-info {
+  background-color: var(--color-info);
+  color: white;
+}
+
+/* Alert Status Cards */
+.alert-critical {
+  border-left: 4px solid var(--color-critical);
+  background-color: rgba(239, 68, 68, 0.05);
+}
+.alert-warning {
+  border-left: 4px solid var(--color-warning);
+  background-color: rgba(245, 158, 11, 0.05);
+}
+.alert-safe {
+  border-left: 4px solid var(--color-safe);
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+/* Typography */
+.text-heading-1 {
+  font-size: var(--font-size-4xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.text-heading-2 {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.text-heading-3 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-body-lg {
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.text-body {
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.text-body-sm {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Utility Classes */
+.transition-all-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}

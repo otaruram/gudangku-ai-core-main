@@ -129,14 +129,14 @@ export default function Forecaster() {
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
 
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between" style={{ borderColor: "var(--color-border)" }}>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Intelligence Engine</h1>
-          <p className="text-sm text-muted-foreground mt-1">Supply Chain Decision Support System</p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "var(--color-text-primary)" }}>Intelligence Engine</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>Supply Chain Decision Support System</p>
         </div>
         {!hasData && !loading && (
           <div className="self-start sm:self-auto sm:text-right">
-            <span className="text-xs bg-black text-white px-2 py-1 rounded">PROPHET v1.5</span>
+            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: "var(--color-bg-card)", color: "var(--color-info)", border: "1px solid var(--color-border)" }}>PROPHET v1.5</span>
           </div>
         )}
         {hasData && (
@@ -175,14 +175,14 @@ export default function Forecaster() {
             />
             {loading && (
               <div className="text-center mt-6 space-y-2">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-black border-r-transparent"></div>
-                <p className="text-sm font-medium">Decomposing Sales Data...</p>
-                <p className="text-xs text-muted-foreground">Historical Analysis • Stock Velocity • Forecasting</p>
+                <div className="inline-block h-7 w-7 animate-spin rounded-full border-2 border-r-transparent" style={{ borderColor: "var(--color-info)", borderRightColor: "transparent" }}></div>
+                <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>Decomposing Sales Data...</p>
+                <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Historical Analysis • Stock Velocity • Forecasting</p>
               </div>
             )}
-            <div className="mt-8 p-4 bg-secondary/20 rounded-lg text-xs text-muted-foreground">
+            <div className="mt-8 p-4 rounded-lg text-xs" style={{ backgroundColor: "var(--color-bg-card)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)" }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-foreground">Required CSV Format:</p>
+                <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>Required CSV Format:</p>
                 <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={downloadSampleCSV}>
                   <Download className="h-3 w-3" />
                   Download Sample CSV
@@ -205,11 +205,11 @@ export default function Forecaster() {
       {hasData && (
         <>
         {/* Data Source Banner */}
-        <div className="flex items-start gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm">
-          <Info className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+        <div className="flex items-start gap-3 p-3 sm:p-4 border rounded-lg text-sm" style={{ borderColor: "var(--color-info)", backgroundColor: "rgba(6, 182, 212, 0.08)" }}>
+          <Info className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "var(--color-info)" }} />
           <div>
-            <p className="font-medium text-blue-800 dark:text-blue-300">Analysis Based on Your CSV Data</p>
-            <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
+            <p className="font-medium" style={{ color: "var(--color-text-primary)" }}>Analysis Based on Your CSV Data</p>
+            <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
               All forecasts, rankings, and stock alerts are calculated from the data you uploaded — not from external market sources. 
               Top Performers = total sales per product. Stock Velocity = current stock ÷ avg daily sales. Market Trajectory = moving average + linear trend projection.
             </p>

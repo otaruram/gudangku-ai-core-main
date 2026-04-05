@@ -154,14 +154,14 @@ Berikan:
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b pb-5">
+      <div className="flex flex-col gap-3 border-b pb-5" style={{ borderColor: "var(--color-border)" }}>
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 shrink-0">
-            <Calendar className="h-5 w-5 text-amber-500" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border shrink-0" style={{ borderColor: "var(--color-warning)", backgroundColor: "rgba(245, 158, 11, 0.12)" }}>
+            <Calendar className="h-5 w-5" style={{ color: "var(--color-warning)" }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Event Simulator</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl" style={{ color: "var(--color-text-primary)" }}>Event Simulator</h1>
+            <p className="text-sm mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
               Prediksi kebutuhan stok sebelum event besar — Lebaran, Harbolnas, dan lainnya
             </p>
           </div>
@@ -192,13 +192,16 @@ Berikan:
                   className={cn(
                     "flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-all",
                     selectedEvent === ev.id
-                      ? "border-amber-500/50 bg-amber-500/10 ring-1 ring-amber-500/30"
-                      : "border-border hover:border-border/80 hover:bg-secondary/40"
+                      ? "ring-1"
+                      : "hover:opacity-90"
                   )}
+                  style={selectedEvent === ev.id
+                    ? { borderColor: "var(--color-warning)", backgroundColor: "rgba(245, 158, 11, 0.12)", color: "var(--color-text-primary)" }
+                    : { borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)", color: "var(--color-text-primary)" }}
                 >
                   <span className="text-xl">{ev.emoji}</span>
                   <span className="text-xs font-semibold leading-tight">{ev.label}</span>
-                  <span className="text-[10px] text-muted-foreground leading-tight">{ev.note}</span>
+                  <span className="text-[10px] leading-tight" style={{ color: "var(--color-text-muted)" }}>{ev.note}</span>
                 </button>
               ))}
             </div>
@@ -268,20 +271,20 @@ Berikan:
               </div>
 
               {/* Table */}
-              <div className="rounded-xl border overflow-hidden">
+              <div className="rounded-xl border overflow-hidden" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-secondary/40 border-b">
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground">Produk</th>
-                        <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Stok</th>
-                        <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Prediksi/hari</th>
-                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">Reorder</th>
-                        <th className="text-center px-4 py-3 font-medium text-muted-foreground">Status</th>
-                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">Aksi</th>
+                      <tr className="border-b" style={{ backgroundColor: "var(--color-bg-secondary)", borderColor: "var(--color-border)" }}>
+                        <th className="text-left px-4 py-3 font-medium" style={{ color: "var(--color-text-muted)" }}>Produk</th>
+                        <th className="text-right px-4 py-3 font-medium hidden sm:table-cell" style={{ color: "var(--color-text-muted)" }}>Stok</th>
+                        <th className="text-right px-4 py-3 font-medium hidden md:table-cell" style={{ color: "var(--color-text-muted)" }}>Prediksi/hari</th>
+                        <th className="text-right px-4 py-3 font-medium" style={{ color: "var(--color-text-muted)" }}>Reorder</th>
+                        <th className="text-center px-4 py-3 font-medium" style={{ color: "var(--color-text-muted)" }}>Status</th>
+                        <th className="text-right px-4 py-3 font-medium" style={{ color: "var(--color-text-muted)" }}>Aksi</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y" style={{ borderColor: "var(--color-border)" }}>
                       {results.map((r, i) => (
                         <tr key={i} className="hover:bg-secondary/20 transition-colors">
                           <td className="px-4 py-3 font-medium">{r.product}</td>

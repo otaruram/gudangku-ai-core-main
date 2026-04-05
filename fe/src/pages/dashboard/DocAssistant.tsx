@@ -27,22 +27,25 @@ export default function DocAssistant() {
   return (
     <div className="flex h-[calc(100vh-6.5rem)] min-h-[620px] flex-col sm:h-[calc(100vh-8rem)]">
       {/* Page Header */}
-      <div className="mb-3 sm:mb-4 flex items-center justify-between">
+      <div
+        className="mb-3 sm:mb-4 flex items-center justify-between rounded-xl border px-4 py-3"
+        style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}
+      >
         <div>
-          <h1 className="text-xl font-bold sm:text-2xl">Doc Assistant</h1>
-          <p className="text-sm text-muted-foreground sm:text-base">
+          <h1 className="text-xl font-bold sm:text-2xl" style={{ color: "var(--color-text-primary)" }}>Doc Assistant</h1>
+          <p className="text-sm sm:text-base" style={{ color: "var(--color-text-secondary)" }}>
             {csvLoaded
               ? "AI assistant with your warehouse data context"
               : "Upload a CSV first to enable data-aware answers"}
           </p>
           {csvLoaded && (
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-500">
+            <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: "var(--color-safe)" }}>
               <Database className="h-3 w-3" />
               CSV loaded: {csvFileName || 'data.csv'}
             </div>
           )}
           {!csvLoaded && (
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-yellow-600">
+            <div className="mt-1 flex items-center gap-1.5 text-xs" style={{ color: "var(--color-warning)" }}>
               <Upload className="h-3 w-3" />
               No CSV data — answers will be generic
             </div>
@@ -55,7 +58,8 @@ export default function DocAssistant() {
               window.location.reload();
             }
           }}
-          className="text-xs border px-2 py-1 rounded hover:bg-secondary"
+          className="text-xs border px-2 py-1 rounded transition-colors"
+          style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)", backgroundColor: "var(--color-bg-secondary)" }}
         >
           Change Document / Reset
         </button>

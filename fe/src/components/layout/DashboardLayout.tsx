@@ -54,10 +54,21 @@ export function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const inferredRole = String(
+    user?.app_metadata?.role ||
+    user?.user_metadata?.role ||
+    user?.user_metadata?.user_role ||
+    "user"
+  ).toLowerCase();
+  const userEmail = String(user?.email || "").toLowerCase();
+  const ownerEmails = new Set(["okitr52@gmail.com", "otaruram@gmail.com"]);
+  const emailIsAdmin = ownerEmails.has(userEmail);
 
   // Get user data from auth context
   const userAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || "User";
+  const authRole = String(user?.app_metadata?.role || user?.user_metadata?.role || "").toLowerCase();
+  const userInitial = (userName || "U").trim().slice(0, 1).toUpperCase();
 
   // Handle logout
   const handleLogout = async () => {
@@ -97,11 +108,12 @@ export function DashboardLayout() {
   const [daysUntilCleanup, setDaysUntilCleanup] = useState<number>(0);
   const [credits, setCredits] = useState<number | null>(null);
   const [dailyQuota, setDailyQuota] = useState<number>(10);
-  const [userRole, setUserRole] = useState<string>("user");
+  const [userRole, setUserRole] = useState<string>(inferredRole === "admin" || emailIsAdmin ? "admin" : "user");
   const [notificationsOn, setNotificationsOn] = useState(() => {
     return localStorage.getItem('notificationsOn') !== 'false';
   });
   const hasNewUpdates = notificationsOn;
+  const isAdmin = userRole === "admin" || authRole === "admin" || emailIsAdmin;
 
   useEffect(() => {
     const calculateCleanupStatus = () => {
@@ -134,6 +146,10 @@ export function DashboardLayout() {
 
 
   useEffect(() => {
+    if (inferredRole === "admin" || emailIsAdmin) {
+      setUserRole("admin");
+    }
+
     const fetchCredits = async () => {
       try {
         const authHeaders = await getAuthHeaders();
@@ -143,14 +159,21 @@ export function DashboardLayout() {
           const data = await res.json();
           setCredits(data.current_credits);
           setDailyQuota(data.daily_quota === "unlimited" ? Infinity : (data.daily_quota ?? 10));
-          setUserRole(data.role ?? "user");
+          const apiRole = String(data.role ?? inferredRole ?? "user").toLowerCase();
+          setUserRole(apiRole === "admin" || emailIsAdmin ? "admin" : apiRole);
         }
       } catch {
         /* ignore, credits display is non-critical */
       }
     };
     fetchCredits();
-  }, [user]);
+  }, [user, inferredRole, emailIsAdmin]);
+
+  useEffect(() => {
+    if (authRole === "admin" || emailIsAdmin) {
+      setUserRole("admin");
+    }
+  }, [authRole, emailIsAdmin]);
 
   const handleCleanup = () => {
     if (confirm("Run Monthly Cleanup?\n\nPolicy: Local data older than 1 year will be deleted.\nThis will refresh the application.")) {
@@ -205,7 +228,7 @@ export function DashboardLayout() {
             key={item.href}
             to={item.href}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5",
               isActive
                 ? "bg-sidebar-primary text-sidebar-primary-foreground"
                 : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -220,7 +243,10 @@ export function DashboardLayout() {
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div
+      className="dark flex min-h-screen w-full"
+      style={{ backgroundColor: "var(--color-bg-primary)", color: "var(--color-text-primary)" }}
+    >
       <OnboardingTour />
       {/* Mobile Overlay */}
       {mobileOpen && (
@@ -279,7 +305,7 @@ export function DashboardLayout() {
             <div className="my-1 border-t border-sidebar-border/70" />
             {renderNavSection("AI Tools", aiNavItems)}
             {/* Admin nav — only visible to admins */}
-            {userRole === "admin" && (() => {
+            {isAdmin && (() => {
               const isActive = location.pathname === adminNavItem.href;
               return (
                 <Link
@@ -373,9 +399,9 @@ export function DashboardLayout() {
         collapsed ? "lg:ml-16" : "lg:ml-64",
         // Mobile no margin
         "ml-0"
-      )}>
+      )} style={{ backgroundColor: "var(--color-bg-primary)" }}>
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:h-16 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border px-4 backdrop-blur sm:h-16 sm:px-6" style={{ backgroundColor: "rgba(15, 17, 23, 0.88)", borderColor: "var(--color-border)" }}>
           {/* Left: Mobile menu + Breadcrumbs */}
           <div className="flex items-center gap-3">
             {/* Mobile menu button */}
@@ -392,7 +418,7 @@ export function DashboardLayout() {
             <div className="flex items-center gap-2 text-sm">
               <span className="hidden text-muted-foreground sm:inline">Gudangku</span>
               <span className="hidden text-muted-foreground sm:inline">/</span>
-              <span className="font-medium">{getCurrentPageTitle()}</span>
+              <span className="font-medium" style={{ color: "var(--color-text-primary)" }}>{getCurrentPageTitle()}</span>
             </div>
           </div>
 
@@ -476,7 +502,7 @@ export function DashboardLayout() {
                 title={userRole === "admin" ? "Admin — unlimited credits" : `${credits} / ${dailyQuota} daily credits remaining`}
                 className={cn(
                   "hidden sm:flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold cursor-default select-none",
-                  userRole === "admin"
+                  isAdmin
                     ? "border-primary/30 bg-primary/10 text-primary"
                     : credits <= 2
                     ? "border-destructive/40 bg-destructive/10 text-destructive"
@@ -486,7 +512,7 @@ export function DashboardLayout() {
                 )}
               >
                 <Zap className="h-3 w-3" />
-                {userRole === "admin" ? "∞" : `${credits} / ${dailyQuota}`}
+                {isAdmin ? "∞" : `${credits} / ${dailyQuota}`}
               </div>
             )}
 
@@ -498,14 +524,22 @@ export function DashboardLayout() {
                     <img
                       src={userAvatar}
                       alt="User"
-                      className="h-8 w-8 rounded-full border border-border object-cover"
+                      className="h-8 w-8 rounded-full border object-cover"
+                      style={{ borderColor: "var(--color-border)" }}
                     />
                   ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                      {userName ? userName.charAt(0).toUpperCase() : 'A'}
+                    <div
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold"
+                      style={{
+                        color: "white",
+                        background: "linear-gradient(135deg, #10b981, #06b6d4)",
+                        boxShadow: "0 6px 16px rgba(6, 182, 212, 0.25)",
+                      }}
+                    >
+                      {userInitial}
                     </div>
                   )}
-                  <span className="hidden text-sm font-medium sm:inline truncate max-w-[100px]">
+                  <span className="hidden text-sm font-medium sm:inline truncate max-w-[110px]" style={{ color: "var(--color-text-primary)" }}>
                     {userName || "Admin"}
                   </span>
                 </Button>
@@ -525,7 +559,7 @@ export function DashboardLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6">
+        <main className="p-4 sm:p-6" style={{ backgroundColor: "var(--color-bg-primary)", minHeight: "calc(100vh - 56px)" }}>
           <Outlet />
         </main>
       </div>
