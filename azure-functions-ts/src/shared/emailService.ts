@@ -33,7 +33,7 @@ export async function sendWelcomeEmail(email: string, name?: string): Promise<vo
     const displayName = name || email.split("@")[0];
 
     await transporter.sendMail({
-      from: '"Gudangku" <noreply@gudangku.space>',
+      from: '"Gudangku" <admin@gudangku.space>',
       to: email,
       subject: "Welcome to Gudangku \u{1F4E6} Your AI Warehouse Intelligence",
       html: buildWelcomeHtml(displayName),
