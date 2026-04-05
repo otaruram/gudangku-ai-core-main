@@ -1,4 +1,5 @@
 import "./functions/health";
+import "./functions/authWebhook";
 import "./functions/chat";
 import "./functions/credits";
 import "./functions/forecast";
