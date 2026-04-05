@@ -675,7 +675,7 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
  */
 export async function registerWebhook(webhookUrl: string): Promise<string> {
   const botToken = await getSecret("TELEGRAM-BOT-TOKEN", "TELEGRAM_BOT_TOKEN");
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET ?? "gudangku-tg-webhook-2026";
+  const secret = await getSecret("TELEGRAM-WEBHOOK-SECRET", "TELEGRAM_WEBHOOK_SECRET");
 
   const res = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
     method: "POST",

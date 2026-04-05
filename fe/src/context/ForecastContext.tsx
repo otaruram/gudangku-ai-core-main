@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { clearSensitiveSessionData, getSessionData, removeSessionData, setSessionData } from '@/lib/sessionData';
 
 // Define the shape of the forecast data
 interface ForecastData {
@@ -26,9 +28,11 @@ export const useForecast = () => {
 };
 
 export const ForecastProvider = ({ children }: { children: ReactNode }) => {
+    const { user } = useAuth();
+
     // 1. Initialize from LocalStorage
     const [data, setDataSource] = useState<ForecastData>(() => {
-        const saved = localStorage.getItem('forecastData');
+        const saved = getSessionData('forecastData');
         if (saved) {
             try {
                 return JSON.parse(saved);
@@ -45,10 +49,24 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
         };
     });
 
-    // 2. Sync to LocalStorage whenever data changes
+    // 2. Sync to SessionStorage whenever data changes
     React.useEffect(() => {
-        localStorage.setItem('forecastData', JSON.stringify(data));
+        setSessionData('forecastData', JSON.stringify(data));
     }, [data]);
+
+    React.useEffect(() => {
+        // Ensure fresh state when account changes.
+        setDataSource({
+            forecastChart: [],
+            bestSellers: [],
+            stockAlerts: [],
+            hasData: false,
+            lastUpdated: null,
+        });
+        if (!user) {
+            clearSensitiveSessionData();
+        }
+    }, [user?.id]);
 
     const setData = (newData: Partial<ForecastData>) => {
         setDataSource(prev => ({
@@ -66,7 +84,7 @@ export const ForecastProvider = ({ children }: { children: ReactNode }) => {
             hasData: false,
             lastUpdated: null,
         });
-        localStorage.removeItem('forecastData');
+        removeSessionData('forecastData');
     };
 
     return (

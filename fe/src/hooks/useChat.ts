@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { getSessionData } from "@/lib/sessionData";
 
 export interface Message {
     id: string;
@@ -49,7 +50,7 @@ export function useChat() {
             const authHeaders = await getAuthHeaders();
 
             // Include CSV context if available
-            const csvContext = localStorage.getItem('csvContext') || '';
+            const csvContext = getSessionData('csvContext') || '';
             const questionWithContext = csvContext
                 ? `[CSV DATA CONTEXT]\n${csvContext}\n\n[USER QUESTION]\n${input || "Please analyze this document."}`
                 : (input || "Please analyze this document.");

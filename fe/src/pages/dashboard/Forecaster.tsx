@@ -6,6 +6,8 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, 
 import { UploadZone } from "@/components/features/forecast/UploadZone";
 import { useForecast } from "@/context/ForecastContext";
 import { Button } from "@/components/ui/button";
+import { setSessionData } from "@/lib/sessionData";
+import { buildCsvSummary, mapForecastPayload } from "@/lib/forecastUtils";
 
 // Theme Colors
 const COLORS = {
@@ -78,14 +80,9 @@ export default function Forecaster() {
     try {
       // Read CSV text for context sharing with Doc Assistant
       const csvText = await file.text();
-      const csvLines = csvText.split('\n');
-      // Store first row (header) + summary for AI context
-      const header = csvLines[0];
-      const rowCount = csvLines.length - 1;
-      const sampleRows = csvLines.slice(1, 6).join('\n');
-      const csvSummary = `File: ${file.name}\nColumns: ${header}\nTotal rows: ${rowCount}\nSample data:\n${sampleRows}`;
-      localStorage.setItem('csvContext', csvSummary);
-      localStorage.setItem('csvFileName', file.name);
+      const csvSummary = buildCsvSummary(file.name, csvText);
+      setSessionData('csvContext', csvSummary);
+      setSessionData('csvFileName', file.name);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -108,23 +105,13 @@ export default function Forecaster() {
       }
 
       const responseData = await response.json();
-
-      // 1. Parse Forecast Chart
-      const mappedForecast = responseData.forecast_chart.map((item: any) => ({
-        date: new Date(item.ds).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-        value: Math.round(item.yhat)
-      }));
-
-      // 2. Parse Best Sellers
-      const best = Object.entries(responseData.best_sellers || {}).map(([name, qty]) => ({
-        name, qty
-      }));
+      const parsed = mapForecastPayload(responseData);
 
       // 3. Update Global Context
       setData({
-        forecastChart: mappedForecast,
-        bestSellers: best,
-        stockAlerts: responseData.stock_alerts || [],
+        forecastChart: parsed.forecastChart,
+        bestSellers: parsed.bestSellers,
+        stockAlerts: parsed.stockAlerts,
         hasData: true
       });
 

@@ -5,6 +5,8 @@ import { useForecast } from "@/context/ForecastContext";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { getSessionData, removeSessionData, setSessionData } from "@/lib/sessionData";
+import { buildCsvSummary, mapForecastPayload } from "@/lib/forecastUtils";
 
 const SAMPLE_CSV = `date,product,sales,stock
 2025-01-01,Gula Pasir 1kg,45,200
@@ -64,7 +66,7 @@ export default function UploadCSV() {
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const hasData = data.hasData;
-  const csvFileName = localStorage.getItem("csvFileName");
+  const csvFileName = getSessionData("csvFileName");
 
   const useSampleData = () => {
     const file = new File([SAMPLE_CSV], "sample_inventory.csv", { type: "text/csv" });
@@ -77,13 +79,9 @@ export default function UploadCSV() {
     setUploadError(null);
     try {
       const csvText = await file.text();
-      const csvLines = csvText.split("\n");
-      const header = csvLines[0];
-      const rowCount = csvLines.length - 1;
-      const sampleRows = csvLines.slice(1, 6).join("\n");
-      const csvSummary = `File: ${file.name}\nColumns: ${header}\nTotal rows: ${rowCount}\nSample data:\n${sampleRows}`;
-      localStorage.setItem("csvContext", csvSummary);
-      localStorage.setItem("csvFileName", file.name);
+      const csvSummary = buildCsvSummary(file.name, csvText);
+      setSessionData("csvContext", csvSummary);
+      setSessionData("csvFileName", file.name);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -115,21 +113,12 @@ export default function UploadCSV() {
       }
 
       const responseData = await response.json();
-
-      const mappedForecast = responseData.forecast_chart.map((item: any) => ({
-        date: new Date(item.ds).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
-        value: Math.round(item.yhat),
-      }));
-
-      const best = Object.entries(responseData.best_sellers || {}).map(([name, qty]) => ({
-        name,
-        qty,
-      }));
+      const parsed = mapForecastPayload(responseData);
 
       setData({
-        forecastChart: mappedForecast,
-        bestSellers: best,
-        stockAlerts: responseData.stock_alerts || [],
+        forecastChart: parsed.forecastChart,
+        bestSellers: parsed.bestSellers,
+        stockAlerts: parsed.stockAlerts,
         hasData: true,
       });
 
@@ -153,8 +142,8 @@ export default function UploadCSV() {
   const handleReset = () => {
     if (confirm("Remove current data? You'll need to upload a new CSV to use all features.")) {
       setData({ forecastChart: [], bestSellers: [], stockAlerts: [], hasData: false });
-      localStorage.removeItem("csvContext");
-      localStorage.removeItem("csvFileName");
+      removeSessionData("csvContext");
+      removeSessionData("csvFileName");
       setUploadSuccess(false);
       setUploadError(null);
     }

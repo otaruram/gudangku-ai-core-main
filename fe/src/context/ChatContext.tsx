@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { getSessionData, removeSessionData, setSessionData } from '@/lib/sessionData';
 
 export interface Message {
     id: string;
@@ -35,9 +37,11 @@ const SAMPLE_WELCOME: Message = {
 };
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
+    const { user } = useAuth();
+
     // 1. Initialize from LocalStorage
     const [messages, setMessages] = useState<Message[]>(() => {
-        const saved = localStorage.getItem('chatHistory');
+        const saved = getSessionData('chatHistory');
         if (saved) {
             try {
                 // Revive dates
@@ -55,8 +59,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     // 2. Sync to LocalStorage
     useEffect(() => {
-        localStorage.setItem('chatHistory', JSON.stringify(messages));
+        setSessionData('chatHistory', JSON.stringify(messages));
     }, [messages]);
+
+    useEffect(() => {
+        setMessages([SAMPLE_WELCOME]);
+    }, [user?.id]);
 
     const handleSend = async (file?: File) => {
         if (!input.trim() && !file) return;
@@ -80,7 +88,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             const userQuestion = input || "Please analyze this document.";
 
             // Build question with CSV context for the API (but show clean question to user)
-            const csvContext = localStorage.getItem('csvContext') || '';
+            const csvContext = getSessionData('csvContext') || '';
             const apiQuestion = csvContext
                 ? `INVENTORY DATA:\n${csvContext}\n\nUSER REQUEST:\n${userQuestion}`
                 : userQuestion;
@@ -129,7 +137,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     const clearHistory = () => {
         setMessages([SAMPLE_WELCOME]);
-        localStorage.removeItem('chatHistory');
+        removeSessionData('chatHistory');
     };
 
     const messagesEndRef = useRef<HTMLDivElement>(null);

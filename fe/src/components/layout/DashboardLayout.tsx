@@ -34,6 +34,7 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/config";
 import { OnboardingTour } from "@/components/features/OnboardingTour";
+import { clearSensitiveSessionData, getSessionData, setSessionData } from "@/lib/sessionData";
 
 const coreNavItems = [
   { title: "Upload CSV", href: "/dashboard/upload", icon: Upload },
@@ -60,6 +61,7 @@ export function DashboardLayout() {
 
   // Handle logout
   const handleLogout = async () => {
+    clearSensitiveSessionData();
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast.error("Logout failed: " + error.message);
@@ -163,13 +165,13 @@ export function DashboardLayout() {
       localStorage.removeItem('stockAlerts');
 
       // Optional: Filter chat history
-      const chatHistory = localStorage.getItem('chatHistory');
+      const chatHistory = getSessionData('chatHistory');
       if (chatHistory) {
         try {
           const parsed = JSON.parse(chatHistory);
           const oneYearAgo = Date.now() - (365 * 24 * 60 * 60 * 1000);
           const filtered = parsed.filter((msg: any) => new Date(msg.timestamp).getTime() > oneYearAgo);
-          localStorage.setItem('chatHistory', JSON.stringify(filtered));
+          setSessionData('chatHistory', JSON.stringify(filtered));
         } catch (e) {
           console.error("Failed to filter chat history", e);
         }

@@ -1,8 +1,9 @@
 import { Sparkles, Zap } from "lucide-react";
+import { getSessionData } from "@/lib/sessionData";
 
 export function AIStatus() {
-    const csvFileName = localStorage.getItem('csvFileName');
-    const hasCsv = !!localStorage.getItem('csvContext');
+    const csvFileName = getSessionData('csvFileName');
+    const hasCsv = !!getSessionData('csvContext');
 
     return (
         <div className="mb-3 flex flex-col gap-2 rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:px-4">

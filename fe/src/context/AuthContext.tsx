@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
+import { clearSensitiveSessionData } from '@/lib/sessionData';
 
 interface AuthContextType {
     session: Session | null;
@@ -26,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [lastUserId, setLastUserId] = useState<string | null>(null);
 
     useEffect(() => {
         // Get initial session
@@ -46,6 +48,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         return () => subscription.unsubscribe();
     }, []);
+
+    useEffect(() => {
+        const currentUserId = user?.id ?? null;
+        if (lastUserId !== null && lastUserId !== currentUserId) {
+            clearSensitiveSessionData();
+        }
+        setLastUserId(currentUserId);
+    }, [user?.id]);
 
     const value = {
         session,

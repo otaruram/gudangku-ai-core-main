@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { getAuthHeaders } from "@/lib/config";
+import { getSessionData, setSessionData } from "@/lib/sessionData";
 
 export default function DashboardHome() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function DashboardHome() {
       `3. Supplier contract negotiation tips`,
       `4. Safety stock recommendation`,
     ].join('\n');
-    localStorage.setItem('assistant_prompt', prompt);
+    setSessionData('assistant_prompt', prompt);
     navigate('/dashboard/assistant');
   };
 
@@ -80,7 +81,7 @@ export default function DashboardHome() {
     window.open(`https://www.tokopedia.com/search?q=${query}`, '_blank', 'noopener,noreferrer');
   };
 
-  const csvFileName = localStorage.getItem('csvFileName');
+  const csvFileName = getSessionData('csvFileName');
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-12">
@@ -157,7 +158,7 @@ export default function DashboardHome() {
                     className="w-full mt-2"
                     onClick={() => {
                       const prompt = `Need a clearance strategy for slow-moving products: ${deadstock.map((i: any) => `${i.name} (${i.qty} sold)`).join(', ')}. Suggest discount strategies, bundle ideas, or liquidation approaches.`;
-                      localStorage.setItem('assistant_prompt', prompt);
+                      setSessionData('assistant_prompt', prompt);
                       navigate('/dashboard/assistant');
                     }}
                   >

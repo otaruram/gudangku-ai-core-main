@@ -4,21 +4,22 @@ import { MessageList } from "@/components/features/assistant/MessageList";
 import { ChatInput } from "@/components/features/assistant/ChatInput";
 import { useChatContext } from "@/context/ChatContext";
 import { Database, Upload } from "lucide-react";
+import { getSessionData, removeSessionData } from "@/lib/sessionData";
 
 export default function DocAssistant() {
   const { messages, input, setInput, isTyping, handleSend, messagesEndRef } = useChatContext();
   const [csvLoaded, setCsvLoaded] = useState(false);
-  const csvFileName = localStorage.getItem('csvFileName');
+  const csvFileName = getSessionData('csvFileName');
 
   useEffect(() => {
-    setCsvLoaded(!!localStorage.getItem('csvContext'));
+    setCsvLoaded(!!getSessionData('csvContext'));
   }, []);
 
   // Check for auto-prompt from Dashboard
   useEffect(() => {
-    const prompt = localStorage.getItem('assistant_prompt');
+    const prompt = getSessionData('assistant_prompt');
     if (prompt) {
-      localStorage.removeItem('assistant_prompt');
+      removeSessionData('assistant_prompt');
       setInput(prompt);
     }
   }, []);
@@ -50,7 +51,7 @@ export default function DocAssistant() {
         <button
           onClick={() => {
             if (confirm("Switch Document Session? Current chat will be cleared.")) {
-              localStorage.removeItem('chatHistory');
+              removeSessionData('chatHistory');
               window.location.reload();
             }
           }}

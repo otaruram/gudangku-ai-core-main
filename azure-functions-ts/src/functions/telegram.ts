@@ -6,6 +6,7 @@
  */
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { handleTelegramUpdate, registerWebhook } from "../shared/telegramBot";
+import { getSecret } from "../shared/keyVault";
 
 /**
  * Webhook handler — receives updates from Telegram.
@@ -17,7 +18,7 @@ async function telegramWebhookHandler(
 ): Promise<HttpResponseInit> {
   try {
     // Verify Telegram secret token
-    const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET ?? "gudangku-tg-webhook-2026";
+    const expectedSecret = await getSecret("TELEGRAM-WEBHOOK-SECRET", "TELEGRAM_WEBHOOK_SECRET");
     const incomingSecret = req.headers.get("x-telegram-bot-api-secret-token") ?? "";
 
     if (incomingSecret !== expectedSecret) {
@@ -57,7 +58,7 @@ async function telegramRegisterHandler(
 ): Promise<HttpResponseInit> {
   // Simple secret guard (not full auth, just prevent random calls)
   const secret = req.query.get("secret") ?? "";
-  const expectedSecret = process.env.TELEGRAM_WEBHOOK_SECRET ?? "gudangku-tg-webhook-2026";
+  const expectedSecret = await getSecret("TELEGRAM-WEBHOOK-SECRET", "TELEGRAM_WEBHOOK_SECRET");
 
   if (secret !== expectedSecret) {
     return { status: 403, jsonBody: { error: "Forbidden" } };

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Calendar, Zap, AlertTriangle, ShoppingCart, MessageSquare, ExternalLink, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getAuthHeaders } from "@/lib/config";
+import { getSessionData } from "@/lib/sessionData";
 
 const EVENTS = [
   { id: "lebaran", label: "Lebaran / Idul Fitri", emoji: "🌙", multiplier: 2.8, note: "Lonjakan demand 180-280% untuk bahan pokok" },
@@ -111,7 +112,7 @@ Berikan:
 
     try {
       const authHeaders = await getAuthHeaders();
-      const csvContext = localStorage.getItem("csvContext") || "";
+      const csvContext = getSessionData("csvContext") || "";
       const fullQuestion = csvContext
         ? `INVENTORY DATA:\n${csvContext}\n\nEVENT SIMULATION REQUEST:\n${prompt}`
         : prompt;
