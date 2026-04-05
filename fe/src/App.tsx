@@ -16,6 +16,7 @@ import DocAssistant from "./pages/dashboard/DocAssistant";
 import History from "./pages/dashboard/History";
 import UploadCSV from "./pages/dashboard/UploadCSV";
 import AdminPanel from "./pages/dashboard/AdminPanel";
+import SeasonalPlanner from "./pages/dashboard/SeasonalPlanner";
 import NotFound from "./pages/NotFound";
 
 // Auth
@@ -44,6 +45,7 @@ const App = () => (
                     <Route path="assistant" element={<DocAssistant />} />
                     <Route path="history" element={<History />} />
                     <Route path="admin" element={<AdminPanel />} />
+                    <Route path="seasonal" element={<SeasonalPlanner />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

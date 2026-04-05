@@ -14,6 +14,7 @@ import {
   X,
   Upload,
   Zap,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
@@ -30,6 +31,7 @@ const navItems = [
   { title: "Upload CSV", href: "/dashboard/upload", icon: Upload },
   { title: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { title: "Forecaster", href: "/dashboard/forecaster", icon: TrendingUp },
+  { title: "Event Simulator", href: "/dashboard/seasonal", icon: Calendar },
   { title: "Doc Assistant", href: "/dashboard/assistant", icon: MessageSquare },
   { title: "History", href: "/dashboard/history", icon: Clock },
 ];
@@ -40,6 +42,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/config";
+import { OnboardingTour } from "@/components/features/OnboardingTour";
+import { OnboardingTour } from "@/components/features/OnboardingTour";
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -181,6 +185,7 @@ export function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
+      <OnboardingTour />
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
