@@ -6,3 +6,4 @@ import "./functions/historyAll";
 import "./functions/historyStats";
 import "./functions/historyDetail";
 import "./functions/admin";
+import "./functions/telegram";
