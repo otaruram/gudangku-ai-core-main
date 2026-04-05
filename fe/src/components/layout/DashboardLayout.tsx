@@ -94,8 +94,6 @@ export function DashboardLayout() {
     return localStorage.getItem('notificationsOn') !== 'false';
   });
   const hasNewUpdates = notificationsOn;
-  const [notificationsOn, setNotificationsOn] = useState(() => localStorage.getItem('notificationsOn') !== 'false');
-  const hasNewUpdates = notificationsOn;
 
   useEffect(() => {
     const calculateCleanupStatus = () => {
@@ -274,6 +272,55 @@ export function DashboardLayout() {
             })()}
           </nav>
 
+          {/* Notification Toggle in Sidebar */}
+          <div className={cn(
+            "border-t border-sidebar-border p-4",
+            collapsed ? "lg:hidden" : ""
+          )}>
+            <div className="flex items-center justify-between rounded-lg bg-sidebar-accent px-3 py-2.5 mb-2">
+              <div className="flex items-center gap-2">
+                <Bell className={cn("h-4 w-4 shrink-0", notificationsOn ? "text-accent" : "text-sidebar-muted")} />
+                <span className="text-xs font-medium text-sidebar-foreground">Updates</span>
+              </div>
+              <button
+                onClick={() => {
+                  const next = !notificationsOn;
+                  setNotificationsOn(next);
+                  localStorage.setItem('notificationsOn', next.toString());
+                }}
+                className={cn(
+                  "relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none",
+                  notificationsOn ? "bg-accent" : "bg-sidebar-border"
+                )}
+                aria-label="Toggle notifications"
+              >
+                <span className={cn(
+                  "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform",
+                  notificationsOn ? "translate-x-4" : "translate-x-1"
+                )} />
+              </button>
+            </div>
+          </div>
+
+          {/* Notification Toggle collapsed icon */}
+          <div className={cn(
+            "border-t border-sidebar-border p-2 hidden lg:flex justify-center",
+            collapsed ? "lg:flex" : "lg:hidden"
+          )}>
+            <button
+              onClick={() => {
+                const next = !notificationsOn;
+                setNotificationsOn(next);
+                localStorage.setItem('notificationsOn', next.toString());
+              }}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
+              title={notificationsOn ? "Updates On" : "Updates Off"}
+            >
+              <Bell className={cn("h-4 w-4", notificationsOn ? "text-accent" : "text-sidebar-muted")} />
+              {notificationsOn && <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-accent" />}
+            </button>
+          </div>
+
           {/* AI Status */}
           <div className={cn(
             "border-t border-sidebar-border p-4",
@@ -325,34 +372,22 @@ export function DashboardLayout() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Notification Toggle */}
+            {/* Notifications Bell */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
-                  {(showCleanup || hasNewUpdates) && (
+                  {showCleanup && (
                     <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  )}
+                  {!showCleanup && notificationsOn && (
+                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary animate-pulse" />
                   )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                <div className="p-2 border-b flex items-center justify-between">
+                <div className="p-3 border-b">
                   <span className="text-xs font-semibold text-muted-foreground">Notifications</span>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-[10px] text-muted-foreground">Updates</span>
-                    <button
-                      onClick={(e) => { e.preventDefault(); setNotificationsOn(!notificationsOn); localStorage.setItem('notificationsOn', (!notificationsOn).toString()); }}
-                      className={cn(
-                        "relative inline-flex h-5 w-9 items-center rounded-full transition-colors",
-                        notificationsOn ? "bg-primary" : "bg-muted"
-                      )}
-                    >
-                      <span className={cn(
-                        "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform",
-                        notificationsOn ? "translate-x-4" : "translate-x-1"
-                      )} />
-                    </button>
-                  </label>
                 </div>
                 {notificationsOn && (
                   <>
@@ -382,7 +417,7 @@ export function DashboardLayout() {
                 )}
                 {!notificationsOn && (
                   <DropdownMenuItem disabled>
-                    <span className="text-xs text-muted-foreground">Notifications are off. Toggle on to see updates.</span>
+                    <span className="text-xs text-muted-foreground">Updates are off. Toggle in the sidebar to enable.</span>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />

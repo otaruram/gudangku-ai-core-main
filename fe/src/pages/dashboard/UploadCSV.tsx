@@ -154,7 +154,7 @@ export default function UploadCSV() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
       {/* Error Banner */}
       {uploadError && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 flex items-start gap-3">
@@ -173,9 +173,9 @@ export default function UploadCSV() {
       )}
 
       {/* Header */}
-      <div className="flex justify-between items-end border-b pb-4">
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Upload CSV</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Upload CSV</h1>
           <p className="text-muted-foreground mt-1">
             Upload your inventory data to activate all features
           </p>
@@ -183,7 +183,7 @@ export default function UploadCSV() {
         {hasData && (
           <button
             onClick={handleReset}
-            className="text-sm font-medium text-destructive hover:underline border border-destructive/20 rounded-md px-3 py-1 bg-destructive/5"
+            className="self-start text-sm font-medium text-destructive hover:underline border border-destructive/20 rounded-md px-3 py-1 bg-destructive/5 sm:self-auto"
           >
             Change File / Reset
           </button>

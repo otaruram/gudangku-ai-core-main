@@ -51,17 +51,17 @@ export default function DashboardHome() {
   const csvFileName = localStorage.getItem('csvFileName');
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border/50 pb-6">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-12">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between border-b border-border/50 pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Command Center</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Command Center</h1>
           <p className="text-muted-foreground mt-1">
             {hasData
               ? `System active. Monitoring 24/7.${csvFileName ? ` Data: ${csvFileName}` : ''}`
               : "Upload a CSV file to activate all features."}
           </p>
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-3">
+        <div className="mt-3 sm:mt-0 flex items-center gap-3">
           {hasData ? (
             <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-medium border border-emerald-500/20">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -96,7 +96,7 @@ export default function DashboardHome() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {/* ... Winner Card ... */}
 
             {/* Deadstock Card — from actual CSV data */}

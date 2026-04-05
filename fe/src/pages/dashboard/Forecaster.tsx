@@ -139,16 +139,16 @@ export default function Forecaster() {
   const { hasData, forecastChart, bestSellers, stockAlerts } = data;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
 
       {/* Header */}
-      <div className="flex justify-between items-end border-b pb-4">
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Intelligence Engine</h1>
-          <p className="text-muted-foreground mt-1">Supply Chain Decision Support System</p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Intelligence Engine</h1>
+          <p className="text-sm text-muted-foreground mt-1">Supply Chain Decision Support System</p>
         </div>
         {!hasData && !loading && (
-          <div className="text-right">
+          <div className="self-start sm:self-auto sm:text-right">
             <span className="text-xs bg-black text-white px-2 py-1 rounded">PROPHET v1.5</span>
           </div>
         )}
@@ -159,7 +159,7 @@ export default function Forecaster() {
                 setData({ ...data, hasData: false, forecastChart: [], bestSellers: [], stockAlerts: [] });
               }
             }}
-            className="text-sm font-medium text-destructive hover:underline border border-destructive/20 rounded-md px-3 py-1 bg-destructive/5"
+            className="self-start text-sm font-medium text-destructive hover:underline border border-destructive/20 rounded-md px-3 py-1 bg-destructive/5 sm:self-auto"
           >
             Change File / Reset
           </button>
@@ -168,7 +168,7 @@ export default function Forecaster() {
 
       {/* UPLOAD SECTION (Initial State) */}
       {!hasData && (
-        <div className="max-w-2xl mx-auto mt-12">
+        <div className="max-w-2xl mx-auto mt-6 sm:mt-12">
           <div className={loading ? "opacity-50 pointer-events-none" : ""}>
             <UploadZone
               isDragging={isDragging}
@@ -218,18 +218,18 @@ export default function Forecaster() {
       {hasData && (
         <>
         {/* Data Source Banner */}
-        <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+        <div className="flex items-start gap-3 p-3 sm:p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-sm">
           <Info className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
           <div>
-            <p className="font-medium text-blue-800">Analysis Based on Your CSV Data</p>
-            <p className="text-blue-600 text-xs mt-1">
+            <p className="font-medium text-blue-800 dark:text-blue-300">Analysis Based on Your CSV Data</p>
+            <p className="text-blue-600 dark:text-blue-400 text-xs mt-1">
               All forecasts, rankings, and stock alerts are calculated from the data you uploaded — not from external market sources. 
               Top Performers = total sales per product. Stock Velocity = current stock ÷ avg daily sales. Market Trajectory = moving average + linear trend projection.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
 
           {/* ZONE 1: WINNERS & LOSERS (Top Left) */}
           <div className="lg:col-span-1 space-y-6">
@@ -353,7 +353,7 @@ export default function Forecaster() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {stockAlerts.length > 0 ? stockAlerts.map((item, i) => (
-                  <div key={i} className="bg-white border p-4 rounded-lg flex justify-between items-center shadow-sm">
+                  <div key={i} className="bg-card border p-4 rounded-lg flex justify-between items-center shadow-sm">
                     <div>
                       <h4 className="font-bold text-sm">{item.product}</h4>
                       <p className="text-xs text-muted-foreground mt-1">Stock: {item.current_stock}</p>
