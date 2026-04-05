@@ -29,6 +29,7 @@ export interface UserDocument {
   last_refresh_date: string; // "YYYY-MM-DD"
   role?: "admin" | "user";
   banned?: boolean;
+  welcomeEmailSent?: boolean;
   telegramChatId?: number;
   telegramLinkCode?: string;
   inventorySummary?: string;
@@ -46,6 +47,24 @@ export function isAdmin(user: UserDocument): boolean {
  */
 function todayUTC(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function buildNewUserDocument(userId: string, email?: string): UserDocument {
+  const isAdminUser = email === ADMIN_EMAIL;
+  return {
+    id: userId,
+    email,
+    current_credits: isAdminUser ? 999999 : DAILY_QUOTA,
+    last_refresh_date: todayUTC(),
+    role: isAdminUser ? "admin" : "user",
+    welcomeEmailSent: false,
+  };
+}
+
+function queueWelcomeEmail(email?: string): boolean {
+  if (!email) return false;
+  sendWelcomeEmail(email).catch(() => {});
+  return true;
 }
 
 /**
@@ -72,20 +91,9 @@ export async function consumeCredits(
     user = resource;
   } catch (err: any) {
     if (err.code === 404) {
-      // First-time user — bootstrap document
-      const isAdminUser = email === ADMIN_EMAIL;
-      user = {
-        id: userId,
-        email,
-        current_credits: isAdminUser ? 999999 : DAILY_QUOTA,
-        last_refresh_date: today,
-        role: isAdminUser ? "admin" : "user",
-      };
+      user = buildNewUserDocument(userId, email);
+      user.welcomeEmailSent = queueWelcomeEmail(email);
       await container.items.create(user);
-      // Send welcome email for new users
-      if (email) {
-        sendWelcomeEmail(email).catch(() => {});
-      }
     } else {
       throw err;
     }
@@ -145,19 +153,9 @@ export async function getCredits(userId: string, email?: string): Promise<UserDo
     user = resource;
   } catch (err: any) {
     if (err.code === 404) {
-      const isAdminUser = email === ADMIN_EMAIL;
-      user = {
-        id: userId,
-        email,
-        current_credits: isAdminUser ? 999999 : DAILY_QUOTA,
-        last_refresh_date: today,
-        role: isAdminUser ? "admin" : "user",
-      };
+      user = buildNewUserDocument(userId, email);
+      user.welcomeEmailSent = queueWelcomeEmail(email);
       await container.items.create(user);
-      // Send welcome email for new users
-      if (email) {
-        sendWelcomeEmail(email).catch(() => {});
-      }
       return user;
     }
     throw err;

@@ -11,6 +11,7 @@ import { app, HttpRequest, HttpResponseInit } from "@azure/functions";
 import * as crypto from "crypto";
 import { getSecret } from "../shared/keyVault";
 import { sendWelcomeEmail } from "../shared/emailService";
+import { getContainer } from "../shared/cosmosClient";
 
 app.http("authWebhook", {
   methods: ["POST"],
@@ -56,15 +57,39 @@ app.http("authWebhook", {
     }
 
     const record = event?.record ?? {};
+    const userId: string = record.id ?? "";
     const email: string = record.email ?? "";
     const name: string =
       record.raw_user_meta_data?.full_name ??
       record.raw_user_meta_data?.name ??
       "";
 
-    if (!email) {
+    if (!userId || !email) {
       console.warn("authWebhook: INSERT event missing email", record);
       return { status: 200, jsonBody: { received: true } };
+    }
+
+    try {
+      const container = getContainer("users");
+      const { resource } = await container.item(userId, userId).read<any>();
+      if (!resource) {
+        await container.items.create({
+          id: userId,
+          email,
+          current_credits: 10,
+          last_refresh_date: new Date().toISOString().slice(0, 10),
+          role: "user",
+          welcomeEmailSent: true,
+        });
+      } else if (!resource.welcomeEmailSent) {
+        await container.item(userId, userId).replace({
+          ...resource,
+          email: resource.email ?? email,
+          welcomeEmailSent: true,
+        });
+      }
+    } catch (err) {
+      console.error("authWebhook: failed to bootstrap user document:", err);
     }
 
     // 5. Fire and forget — don't fail the webhook if email errors
