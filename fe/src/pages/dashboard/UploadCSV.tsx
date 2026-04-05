@@ -44,13 +44,15 @@ const SAMPLE_CSV = `date,product,sales,stock
 2025-01-07,Tepung Terigu 1kg,13,156`;
 
 function downloadSampleCSV() {
-  const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
+  const blob = new Blob([SAMPLE_CSV], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "sample_inventory.csv";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 export default function UploadCSV() {
@@ -63,6 +65,11 @@ export default function UploadCSV() {
 
   const hasData = data.hasData;
   const csvFileName = localStorage.getItem("csvFileName");
+
+  const useSampleData = () => {
+    const file = new File([SAMPLE_CSV], "sample_inventory.csv", { type: "text/csv" });
+    handleFileProcess(file);
+  };
 
   const handleFileProcess = async (file: File) => {
     setLoading(true);
@@ -261,17 +268,29 @@ export default function UploadCSV() {
 
           {/* CSV Format Guide */}
           <div className="mt-8 p-4 bg-secondary/20 rounded-lg text-xs text-muted-foreground">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
               <p className="font-semibold text-foreground">Required CSV Format:</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-xs gap-1"
-                onClick={downloadSampleCSV}
-              >
-                <Download className="h-3 w-3" />
-                Download Sample CSV
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={useSampleData}
+                  disabled={loading}
+                >
+                  <FileSpreadsheet className="h-3 w-3" />
+                  Pakai Data Contoh
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={downloadSampleCSV}
+                >
+                  <Download className="h-3 w-3" />
+                  Download CSV
+                </Button>
+              </div>
             </div>
             <p className="mb-2">Your CSV must have these columns (names are auto-detected):</p>
             <ul className="list-disc pl-4 space-y-1">
