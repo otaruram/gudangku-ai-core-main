@@ -29,6 +29,9 @@ export interface UserDocument {
   last_refresh_date: string; // "YYYY-MM-DD"
   role?: "admin" | "user";
   banned?: boolean;
+  telegramChatId?: number;
+  telegramLinkCode?: string;
+  inventorySummary?: string;
 }
 
 /** Admin email — permanent unlimited credits */

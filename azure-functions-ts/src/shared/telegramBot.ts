@@ -127,31 +127,61 @@ async function getUserContext(telegramChatId: number): Promise<{ userId: string;
     const user = resources[0];
     const userId = user.id as string;
 
-    // Try to get recent chat logs for context
-    const chatContainer = getContainer("chat_logs");
-    const { resources: recentChats } = await chatContainer.items
-      .query({
-        query: "SELECT TOP 3 c.question, c.answer FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
-        parameters: [{ name: "@uid", value: userId }],
-      })
-      .fetchAll();
-
     // Build compact context (budget-friendly)
     let context = "";
 
+    // 1. Check inventorySummary on user doc (set by forecast endpoint)
     if (user.inventorySummary) {
-      // Truncate to ~800 chars to keep token usage low
       const summary = String(user.inventorySummary).slice(0, 800);
       context += `INVENTORY DATA:\n${summary}\n\n`;
+    } else {
+      // 2. Fallback: pull latest from prediction_history
+      try {
+        const historyContainer = getContainer("prediction_history");
+        const { resources: histories } = await historyContainer.items
+          .query({
+            query: "SELECT TOP 1 c.plotData, c.filename FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
+            parameters: [{ name: "@uid", value: userId }],
+          })
+          .fetchAll();
+
+        if (histories && histories.length > 0) {
+          const h = histories[0];
+          const alerts = (h.plotData?.stock_alerts || [])
+            .slice(0, 8)
+            .map((a: any) => `${a.product}: stok ${a.current_stock}, status ${a.status}, ${a.days_left}d left`)
+            .join("\n");
+          const sellers = Object.entries(h.plotData?.best_sellers || {})
+            .slice(0, 5)
+            .map(([name, qty]) => `${name}: ${qty}`)
+            .join(", ");
+          context += `INVENTORY DATA (dari ${h.filename || "CSV"}):\nTOP PRODUK: ${sellers}\nSTOK ALERTS:\n${alerts}\n\n`;
+        }
+      } catch {
+        // prediction_history might not exist
+      }
     }
 
-    if (recentChats && recentChats.length > 0) {
-      context += "RECENT ANALYSIS:\n";
-      for (const chat of recentChats) {
-        const q = String(chat.question).slice(0, 80);
-        const a = String(chat.answer).slice(0, 120);
-        context += `Q: ${q}\nA: ${a}\n`;
+    // 3. Recent chat context
+    try {
+      const chatContainer = getContainer("chat_logs");
+      const { resources: recentChats } = await chatContainer.items
+        .query({
+          query: "SELECT TOP 3 c.question, c.answer FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
+          parameters: [{ name: "@uid", value: userId }],
+        })
+        .fetchAll();
+
+      if (recentChats && recentChats.length > 0) {
+        context += "RECENT ANALYSIS:\n";
+        for (const chat of recentChats) {
+          const q = String(chat.question).slice(0, 80);
+          const a = String(chat.answer).slice(0, 120);
+          context += `Q: ${q}\nA: ${a}\n`;
+        }
       }
+    } catch {
+      // chat_logs might be empty
     }
 
     return { userId, context: context.trim() };

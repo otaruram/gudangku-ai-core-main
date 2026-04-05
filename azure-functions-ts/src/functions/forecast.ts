@@ -215,7 +215,38 @@ async function forecastHandler(
     // 4. Compute statistics and forecast
     const result = computeStats(rows, horizon);
 
-    // 5. Persist to Cosmos DB
+    // 5. Save inventory summary to user doc (for Telegram bot access)
+    try {
+      const container = getContainer("users");
+      const alertsSummary = result.stock_alerts
+        .map((a: any) => `${a.product}: stok ${a.current_stock}, status ${a.status}, ${a.days_left} hari lagi`)
+        .join("\n");
+      const sellersSummary = Object.entries(result.best_sellers)
+        .map(([name, qty]) => `${name}: ${qty} terjual`)
+        .join(", ");
+      const inventorySummary = [
+        `TOP PRODUK: ${sellersSummary}`,
+        `STOK ALERTS:\n${alertsSummary}`,
+        `RATA-RATA PENJUALAN HARIAN: ${result.summary.avg_daily_sales}`,
+        `FILE: ${filename.replace(/[^\w\s\-\.]/g, "_")}`,
+        `UPDATE: ${new Date().toISOString().slice(0, 10)}`,
+      ].join("\n");
+
+      // Upsert: read existing, update inventorySummary
+      try {
+        const { resource: existing } = await container.item(claims.sub, claims.sub).read();
+        if (existing) {
+          existing.inventorySummary = inventorySummary;
+          await container.item(claims.sub, claims.sub).replace(existing);
+        }
+      } catch {
+        // User doc might not exist yet — credit system will create it
+      }
+    } catch (err) {
+      context.warn("Failed to save inventory summary: " + err);
+    }
+
+    // 6. Persist forecast history to Cosmos DB
     try {
       const container = getContainer("prediction_history");
       await container.items.create({
