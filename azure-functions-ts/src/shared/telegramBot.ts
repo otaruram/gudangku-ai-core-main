@@ -2,13 +2,13 @@
  * Telegram Bot Service for GudangKu Supply Chain Assistant.
  *
  * Capabilities:
- * - Text questions about user's inventory data
+ * - Full access to user's data: inventory, forecasts, stock alerts, chat history
  * - Photo/image analysis (product photos, receipts, labels)
  * - PDF document processing (invoices, purchase orders)
- * - Reads user's CSV/inventory context from Cosmos DB
+ * - Template questions for new/first-time users
+ * - Supply chain expert knowledge
  *
  * Uses Redis for caching & rate limiting.
- * Token budget: max 200 tokens output to control costs.
  */
 import { getSecret } from "./keyVault";
 import { getCachedResponse, setCachedResponse, checkRateLimit } from "./redisCache";
@@ -16,20 +16,79 @@ import { getContainer } from "./cosmosClient";
 import { consumeCredits, getCredits, CreditError } from "./creditSystem";
 
 const SYSTEM_PROMPT = [
-  "You are GudangKu Supply Chain AI, a professional supply chain and inventory management consultant for Indonesian UMKM businesses.",
+  "You are Kang Supply, the AI assistant of GudangKu (gudangku.space) — an AI-powered warehouse intelligence platform for Indonesian UMKM businesses.",
   "",
-  "CONTEXT: You are chatting via Telegram. The user is a warehouse owner or UMKM operator.",
+  "ABOUT GUDANGKU:",
+  "GudangKu helps UMKM owners manage inventory with AI. Features: Dashboard analytics, AI Forecaster (predict sales 90 days), Stock Alerts (reorder points), Doc Assistant (ask questions about inventory), History (past analyses), and this Telegram bot.",
+  "",
+  "YOUR ROLE: You are a supply chain expert. When the user has linked their account, you have FULL ACCESS to their data: inventory levels, sales forecasts, stock alerts, best-selling products, and past AI analyses. Use this data actively in every answer.",
   "",
   "RULES:",
-  "1. Respond in Bahasa Indonesia unless the user writes in English.",
-  "2. Keep responses SHORT and actionable (max 150 words).",
+  "1. ALWAYS respond in Bahasa Indonesia unless user writes in English.",
+  "2. Keep responses clear and thorough (200-400 words). Do NOT be too brief.",
   "3. Use numbered lists (1. 2. 3.) for recommendations.",
-  "4. NEVER use markdown formatting (no *, no _, no `, no #).",
-  "5. When given inventory data, reference specific products and numbers.",
-  "6. For images: identify products, estimate quantities, note conditions, suggest actions.",
-  "7. For PDFs/documents: extract key info (items, quantities, prices, dates, suppliers).",
-  "8. Always end with one actionable next step.",
-  "9. If the user hasn't linked their data yet, tell them to visit gudangku.space to upload CSV.",
+  "4. NEVER use markdown formatting (no *, no _, no `, no #). Plain text only.",
+  "5. When given inventory data, ALWAYS reference specific product names and numbers from the data.",
+  "6. For images: identify products, estimate quantities, note conditions, suggest supply chain actions.",
+  "7. For PDFs/documents: extract items, quantities, prices, dates, suppliers.",
+  "8. Always end with a concrete actionable next step.",
+  "9. If user asks about something unrelated to supply chain, politely redirect to your expertise area.",
+  "10. If the user has no data yet, guide them to upload CSV at gudangku.space.",
+  "11. When discussing stock alerts, explain the urgency: STOCKOUT = harus segera restok, CRITICAL = pesan sekarang, WARNING = rencanakan pemesanan, SAFE = monitor saja.",
+  "12. For forecasting questions, reference actual forecast data if available.",
+].join("\n");
+
+const WELCOME_TEMPLATE = [
+  "Halo! Saya Kang Supply, asisten AI dari GudangKu.",
+  "",
+  "Saya punya akses penuh ke data gudang kamu dan bisa bantu:",
+  "",
+  "1. Cek stok mana yang kritis dan perlu restock segera",
+  "2. Analisis tren penjualan dan prediksi demand",
+  "3. Rekomendasi strategi reorder point",
+  "4. Analisis foto produk, struk, atau label",
+  "5. Baca dokumen PDF (invoice, PO, surat jalan)",
+  "6. Konsultasi strategi supply chain",
+  "",
+  "Untuk menghubungkan akun GudangKu kamu:",
+  "1. Buka gudangku.space > Dashboard",
+  "2. Klik 'Hubungkan Telegram'",
+  "3. Ketik /link KODE di sini",
+  "",
+  "Coba tanya salah satu ini:",
+  "",
+  "- \"Stok mana yang paling kritis?\"",
+  "- \"Prediksi penjualan minggu depan\"",
+  "- \"Produk apa yang paling laku?\"",
+  "- \"Kapan harus restock Beras Premium?\"",
+  "- \"Analisis performa gudang saya\"",
+  "",
+  "Atau langsung kirim foto/PDF untuk dianalisis!",
+].join("\n");
+
+const TEMPLATE_QUESTIONS_LINKED = [
+  "Akun kamu sudah terhubung! Berikut pertanyaan yang bisa kamu coba:",
+  "",
+  "STOK & INVENTORY:",
+  '- "Stok mana yang paling kritis sekarang?"',
+  '- "Produk apa yang harus saya restock duluan?"',
+  '- "Berapa hari lagi stok Minyak Goreng habis?"',
+  "",
+  "PENJUALAN & FORECAST:",
+  '- "Produk apa yang paling laku?"',
+  '- "Prediksi penjualan 30 hari ke depan"',
+  '- "Tren penjualan minggu ini vs minggu lalu"',
+  "",
+  "STRATEGI SUPPLY CHAIN:",
+  '- "Rekomendasi reorder point untuk semua produk"',
+  '- "Analisis performa gudang saya"',
+  '- "Bagaimana cara kurangi deadstock?"',
+  "",
+  "DOKUMEN & FOTO:",
+  "- Kirim foto produk/struk untuk analisis",
+  "- Kirim PDF invoice/PO untuk ekstrak data",
+  "",
+  "Ketik pertanyaan kamu atau /help untuk bantuan.",
 ].join("\n");
 
 interface TelegramMessage {
@@ -109,10 +168,10 @@ async function downloadTelegramFile(fileId: string, botToken: string): Promise<{
 }
 
 /**
- * Get the user's inventory context from Cosmos DB (linked via Telegram chat ID).
- * Returns a trimmed summary to stay within token budget.
+ * Get the user's FULL data context from Cosmos DB (linked via Telegram chat ID).
+ * Pulls: inventory summary, forecast data, stock alerts, best sellers, chat history.
  */
-async function getUserContext(telegramChatId: number): Promise<{ userId: string; context: string } | null> {
+async function getUserContext(telegramChatId: number): Promise<{ userId: string; context: string; isFirstMessage?: boolean } | null> {
   try {
     const container = getContainer("users");
     const { resources } = await container.items
@@ -126,65 +185,89 @@ async function getUserContext(telegramChatId: number): Promise<{ userId: string;
 
     const user = resources[0];
     const userId = user.id as string;
+    const parts: string[] = [];
 
-    // Build compact context (budget-friendly)
-    let context = "";
+    // Check if this is the user's first telegram interaction
+    const isFirstMessage = !user._telegramGreeted;
 
-    // 1. Check inventorySummary on user doc (set by forecast endpoint)
+    // 1. Inventory summary (set by forecast endpoint)
     if (user.inventorySummary) {
-      const summary = String(user.inventorySummary).slice(0, 800);
-      context += `INVENTORY DATA:\n${summary}\n\n`;
-    } else {
-      // 2. Fallback: pull latest from prediction_history
-      try {
-        const historyContainer = getContainer("prediction_history");
-        const { resources: histories } = await historyContainer.items
-          .query({
-            query: "SELECT TOP 1 c.plotData, c.filename FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
-            parameters: [{ name: "@uid", value: userId }],
-          })
-          .fetchAll();
-
-        if (histories && histories.length > 0) {
-          const h = histories[0];
-          const alerts = (h.plotData?.stock_alerts || [])
-            .slice(0, 8)
-            .map((a: any) => `${a.product}: stok ${a.current_stock}, status ${a.status}, ${a.days_left}d left`)
-            .join("\n");
-          const sellers = Object.entries(h.plotData?.best_sellers || {})
-            .slice(0, 5)
-            .map(([name, qty]) => `${name}: ${qty}`)
-            .join(", ");
-          context += `INVENTORY DATA (dari ${h.filename || "CSV"}):\nTOP PRODUK: ${sellers}\nSTOK ALERTS:\n${alerts}\n\n`;
-        }
-      } catch {
-        // prediction_history might not exist
-      }
+      parts.push(`DATA INVENTORY:\n${String(user.inventorySummary).slice(0, 1200)}`);
     }
 
-    // 3. Recent chat context
+    // 2. Pull full forecast data from prediction_history
+    try {
+      const historyContainer = getContainer("prediction_history");
+      const { resources: histories } = await historyContainer.items
+        .query({
+          query: "SELECT TOP 1 c.plotData, c.filename, c.createdAt FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
+          parameters: [{ name: "@uid", value: userId }],
+        })
+        .fetchAll();
+
+      if (histories && histories.length > 0) {
+        const h = histories[0];
+        const plotData = h.plotData || {};
+
+        // Stock alerts (all of them)
+        const alerts = (plotData.stock_alerts || [])
+          .map((a: any) => `${a.product}: stok ${a.current_stock}, ROP ${a.rop}, status ${a.status}, sisa ${a.days_left} hari, aksi: ${a.action}`)
+          .join("\n");
+        if (alerts) {
+          parts.push(`STOCK ALERTS:\n${alerts}`);
+        }
+
+        // Best sellers
+        const sellers = Object.entries(plotData.best_sellers || {})
+          .map(([name, qty]) => `${name}: ${qty} unit terjual`)
+          .join("\n");
+        if (sellers) {
+          parts.push(`BEST SELLERS:\n${sellers}`);
+        }
+
+        // Forecast chart (summary: next 7 and 30 days)
+        const chart = plotData.chart || [];
+        if (chart.length > 0) {
+          const next7 = chart.slice(0, 7);
+          const avgNext7 = Math.round(next7.reduce((s: number, c: any) => s + (c.yhat || 0), 0) / next7.length);
+          const next30 = chart.slice(0, 30);
+          const avgNext30 = Math.round(next30.reduce((s: number, c: any) => s + (c.yhat || 0), 0) / next30.length);
+          const totalNext30 = Math.round(next30.reduce((s: number, c: any) => s + (c.yhat || 0), 0));
+          parts.push(`FORECAST PREDIKSI:\nRata-rata harian 7 hari ke depan: ${avgNext7} unit\nRata-rata harian 30 hari ke depan: ${avgNext30} unit\nTotal prediksi 30 hari: ${totalNext30} unit\nData forecast: ${chart.length} hari ke depan`);
+        }
+
+        if (h.filename) {
+          parts.push(`SUMBER DATA: ${h.filename} (diupload ${h.createdAt ? new Date(h.createdAt).toLocaleDateString("id-ID") : "sebelumnya"})`);
+        }
+      }
+    } catch {
+      // prediction_history might not exist
+    }
+
+    // 3. Recent chat history (last 5 conversations)
     try {
       const chatContainer = getContainer("chat_logs");
       const { resources: recentChats } = await chatContainer.items
         .query({
-          query: "SELECT TOP 3 c.question, c.answer FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
+          query: "SELECT TOP 5 c.question, c.answer, c.createdAt FROM c WHERE c.userId = @uid ORDER BY c.createdAt DESC",
           parameters: [{ name: "@uid", value: userId }],
         })
         .fetchAll();
 
       if (recentChats && recentChats.length > 0) {
-        context += "RECENT ANALYSIS:\n";
-        for (const chat of recentChats) {
-          const q = String(chat.question).slice(0, 80);
-          const a = String(chat.answer).slice(0, 120);
-          context += `Q: ${q}\nA: ${a}\n`;
-        }
+        const chatSummary = recentChats.map((chat: any) => {
+          const q = String(chat.question).slice(0, 100);
+          const a = String(chat.answer).slice(0, 200);
+          return `Q: ${q}\nA: ${a}`;
+        }).join("\n---\n");
+        parts.push(`RIWAYAT ANALISIS TERBARU (${recentChats.length} percakapan):\n${chatSummary}`);
       }
     } catch {
       // chat_logs might be empty
     }
 
-    return { userId, context: context.trim() };
+    const context = parts.join("\n\n");
+    return { userId, context: context || "", isFirstMessage };
   } catch (err) {
     console.warn("Failed to get user context:", err);
     return null;
@@ -213,9 +296,20 @@ async function linkTelegramAccount(telegramChatId: number, linkCode: string): Pr
     const user = resources[0];
     user.telegramChatId = telegramChatId;
     user.telegramLinkCode = undefined; // one-time use
+    user._telegramGreeted = true;
     await container.item(user.id, user.id).replace(user);
 
-    return `Akun berhasil terhubung! Sekarang kamu bisa tanya-tanya soal stok dan inventory langsung di sini.\n\nKetik "stok" untuk cek ringkasan stok kamu.`;
+    return [
+      "Akun berhasil terhubung! Saya sekarang bisa akses data gudang kamu.",
+      "",
+      "Coba tanya salah satu ini:",
+      '- "Stok mana yang paling kritis?"',
+      '- "Produk apa yang paling laku?"',
+      '- "Kapan harus restock?"',
+      '- "Analisis performa gudang saya"',
+      "",
+      "Atau ketik /stok untuk ringkasan stok langsung.",
+    ].join("\n");
   } catch {
     return "Gagal menghubungkan akun. Coba lagi nanti.";
   }
@@ -261,7 +355,7 @@ async function callGeminiWithFile(
       { role: "user", content: userContent },
     ],
     temperature: 0.3,
-    max_tokens: 200,
+    max_tokens: 1024,
     top_p: 0.8,
   };
 
@@ -312,7 +406,7 @@ async function callGeminiText(
       { role: "user", content: fullPrompt },
     ],
     temperature: 0.3,
-    max_tokens: 200,
+    max_tokens: 1024,
     top_p: 0.8,
   };
 
@@ -355,22 +449,13 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
 
   // /start command
   if (text === "/start") {
-    await sendMessage(chatId, [
-      "Halo! Saya GudangKu AI, asisten supply chain kamu.",
-      "",
-      "Yang bisa saya bantu:",
-      "1. Tanya soal stok dan inventory",
-      "2. Analisis foto produk/struk/label",
-      "3. Baca dokumen PDF (invoice, PO)",
-      "4. Strategi restock dan supplier",
-      "",
-      "Untuk menghubungkan akun GudangKu kamu, ketik:",
-      "/link KODE_KAMU",
-      "",
-      "Kode bisa didapat di gudangku.space > Dashboard.",
-      "",
-      "Atau langsung tanya apa saja soal supply chain!",
-    ].join("\n"), botToken);
+    // Check if user is already linked
+    const startCtx = await getUserContext(chatId);
+    if (startCtx && startCtx.context) {
+      await sendMessage(chatId, TEMPLATE_QUESTIONS_LINKED, botToken);
+    } else {
+      await sendMessage(chatId, WELCOME_TEMPLATE, botToken);
+    }
     return;
   }
 
@@ -390,18 +475,25 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
   if (text === "/help") {
     await sendMessage(chatId, [
       "PERINTAH:",
-      "/start - Mulai bot",
+      "/start - Mulai bot & lihat template pertanyaan",
       "/link KODE - Hubungkan akun GudangKu",
-      "/stok - Ringkasan stok kamu",
+      "/stok - Analisis lengkap stok kamu",
+      "/forecast - Prediksi penjualan ke depan",
       "/kredit - Cek sisa kredit",
       "/help - Bantuan",
       "",
-      "FITUR:",
-      "- Kirim teks: tanya soal inventory/supply chain",
+      "YANG BISA KAMU TANYA:",
+      "- Stok mana yang paling kritis?",
+      "- Produk apa yang paling laku?",
+      "- Kapan harus restock Beras Premium?",
+      "- Analisis performa gudang saya",
+      "- Rekomendasi strategi supply chain",
+      "",
+      "FITUR LAINNYA:",
       "- Kirim foto: analisis produk/struk/label/gudang",
       "- Kirim PDF: baca invoice, PO, atau dokumen",
       "",
-      "Tips: Pertanyaan yang sama akan di-cache (gratis).",
+      "Tips: Pertanyaan yang sama di-cache otomatis (gratis).",
     ].join("\n"), botToken);
     return;
   }
@@ -413,12 +505,27 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
       await sendMessage(chatId, "Belum ada data inventory. Upload CSV di gudangku.space dulu, lalu hubungkan akun dengan /link KODE.", botToken);
       return;
     }
-    // Summarize using AI
+    // Summarize using AI with full context
     const { text: summary } = await callGeminiText(
-      "Berikan ringkasan singkat stok saya: produk mana yang kritis, perlu restock, dan aman. Format: daftar nomor.",
+      "Berikan analisis lengkap stok saya: 1) Produk mana yang KRITIS dan harus segera restock (sebutkan nama produk, sisa stok, dan berapa hari lagi habis), 2) Produk yang WARNING (perlu rencana pemesanan), 3) Produk yang AMAN. Berikan rekomendasi urutan prioritas restok.",
       userCtx.context
     );
     await sendMessage(chatId, summary, botToken);
+    return;
+  }
+
+  // /forecast command
+  if (text === "/forecast") {
+    const userCtx = await getUserContext(chatId);
+    if (!userCtx || !userCtx.context) {
+      await sendMessage(chatId, "Belum ada data forecast. Upload CSV di gudangku.space dulu, lalu hubungkan akun dengan /link KODE.", botToken);
+      return;
+    }
+    const { text: forecast } = await callGeminiText(
+      "Berdasarkan data forecast yang ada, berikan analisis: 1) Prediksi tren penjualan 7 hari dan 30 hari ke depan, 2) Produk mana yang permintaannya akan naik, 3) Produk mana yang permintaannya turun, 4) Rekomendasi stok yang harus disiapkan. Sebutkan angka-angka spesifik.",
+      userCtx.context
+    );
+    await sendMessage(chatId, forecast, botToken);
     return;
   }
 
@@ -450,6 +557,37 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<void
   // Get user context (if linked)
   const userCtx = await getUserContext(chatId);
   const inventoryContext = userCtx?.context ?? "";
+
+  // First-time interaction for linked users: show template questions
+  if (userCtx && userCtx.isFirstMessage) {
+    try {
+      const usersContainer = getContainer("users");
+      const { resource: userDoc } = await usersContainer.item(userCtx.userId, userCtx.userId).read();
+      if (userDoc) {
+        userDoc._telegramGreeted = true;
+        await usersContainer.item(userCtx.userId, userCtx.userId).replace(userDoc);
+      }
+    } catch { /* ignore */ }
+    // Send template, then continue to process their actual message
+    if (!text && !msg.photo && !msg.document) {
+      await sendMessage(chatId, TEMPLATE_QUESTIONS_LINKED, botToken);
+      return;
+    }
+  }
+
+  // If user is not linked, provide guidance but still answer
+  if (!userCtx && text) {
+    // Still answer supply chain questions but note they should link
+    const unlinkedNote = "\n\nTip: Hubungkan akun GudangKu kamu dengan /link KODE agar saya bisa akses data stok kamu langsung.";
+    try {
+      const { text: answer, cached } = await callGeminiText(text, "");
+      const creditNote = cached ? " (Cached)" : "";
+      await sendMessage(chatId, answer + unlinkedNote + creditNote, botToken);
+    } catch {
+      await sendMessage(chatId, "Maaf, terjadi error. Coba lagi nanti.", botToken);
+    }
+    return;
+  }
 
   // Credit check & deduction (if linked)
   if (userCtx) {
