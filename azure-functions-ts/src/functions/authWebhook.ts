@@ -1,11 +1,11 @@
 /**
- * POST /auth/webhook — Supabase Auth webhook trigger.
+ * POST /auth/webhook — Supabase Database Webhook trigger.
  *
- * Supabase sends a signed POST request when auth events occur.
- * We listen for INSERT on auth.users (new signup) and send a welcome email.
+ * Supabase sends a POST request on auth.users INSERT (new signup).
+ * Authentication: simple shared secret via x-webhook-secret header.
  *
- * Signature verification: Supabase signs request with a shared secret
- * via HMAC-SHA256 (header: x-supabase-signature).
+ * Payload shape (Supabase Database Webhooks):
+ *   { type: "INSERT", table: "users", schema: "auth", record: { id, email, raw_user_meta_data, ... } }
  */
 import { app, HttpRequest, HttpResponseInit } from "@azure/functions";
 import * as crypto from "crypto";
@@ -17,10 +17,7 @@ app.http("authWebhook", {
   authLevel: "anonymous",
   route: "auth/webhook",
   handler: async (req: HttpRequest): Promise<HttpResponseInit> => {
-    // 1. Read raw body for signature verification
-    const rawBody = await req.text();
-
-    // 2. Verify Supabase webhook signature
+    // 1. Verify shared secret from x-webhook-secret header
     let webhookSecret: string;
     try {
       webhookSecret = await getSecret("SUPABASE-WEBHOOK-SECRET", "SUPABASE_WEBHOOK_SECRET");
@@ -29,26 +26,28 @@ app.http("authWebhook", {
       return { status: 500, jsonBody: { error: "Webhook secret not configured" } };
     }
 
-    const signature = req.headers.get("x-supabase-signature") ?? "";
-    const hmac = crypto
-      .createHmac("sha256", webhookSecret)
-      .update(rawBody)
-      .digest("hex");
-
-    if (!crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(signature))) {
-      console.warn("authWebhook: invalid signature");
-      return { status: 401, jsonBody: { error: "Invalid signature" } };
+    const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
+    if (
+      !incomingSecret ||
+      !crypto.timingSafeEqual(
+        Buffer.from(webhookSecret),
+        Buffer.from(incomingSecret)
+      )
+    ) {
+      console.warn("authWebhook: invalid or missing x-webhook-secret");
+      return { status: 401, jsonBody: { error: "Unauthorized" } };
     }
 
-    // 3. Parse event
+    // 2. Parse body
     let event: any;
     try {
+      const rawBody = await req.text();
       event = JSON.parse(rawBody);
     } catch {
       return { status: 400, jsonBody: { error: "Invalid JSON" } };
     }
 
-    // 4. Only handle INSERT on auth.users (new signup)
+    // 3. Only handle INSERT on auth.users (new signup)
     const table: string = event?.table ?? "";
     const eventType: string = event?.type ?? "";
     if (table !== "users" || eventType !== "INSERT") {
