@@ -29,7 +29,7 @@ export function mapForecastPayload(responseData: ForecastApiPayload): {
   stockAlerts: any[];
 } {
   const forecastChart = (responseData.forecast_chart ?? []).map((item) => ({
-    date: new Date(item.ds).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+    date: new Date(item.ds).toLocaleDateString("en-US", { day: "2-digit", month: "short" }),
     value: Math.round(item.yhat),
   }));
 

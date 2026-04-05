@@ -5,6 +5,7 @@ import { Copy, Check, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { getAuthHeaders } from "@/lib/config";
+import { setSessionData } from "@/lib/sessionData";
 
 // Simple card components
 function StatCard_Simple({ label, value, icon, color, trend }: any) {
@@ -33,7 +34,7 @@ function StatCard_Simple({ label, value, icon, color, trend }: any) {
   );
 }
 
-function AlertCard({ status, title, quantity, days, action }: any) {
+function AlertCard({ status, title, quantity, days, action, onAction }: any) {
   const normalizedStatus = String(status || "").toLowerCase();
   const isCritical = normalizedStatus === "critical" || normalizedStatus === "stockout";
   const bgColor = isCritical ? "rgba(239, 68, 68, 0.1)" : "rgba(245, 158, 11, 0.1)";
@@ -58,6 +59,7 @@ function AlertCard({ status, title, quantity, days, action }: any) {
         size="sm"
         className="shrink-0 border-0 text-white"
         style={{ backgroundColor: textColor }}
+        onClick={onAction}
       >
         {action}
       </Button>
@@ -80,6 +82,18 @@ export default function DashboardHome() {
     normalizedStatus: String(alert?.status || "").toLowerCase(),
     productLabel: alert?.product_name || alert?.product || "Produk",
     daysLeft: alert?.days_until_stockout ?? alert?.days_left ?? 0,
+  }));
+
+  const normalizedForecastChart = (forecastChart || []).map((point: any) => ({
+    ...point,
+    pointValue: Number(point?.value ?? point?.forecast ?? point?.yhat ?? 0),
+  }));
+
+  const normalizedBestSellers = (bestSellers || []).map((product: any) => ({
+    ...product,
+    label: product?.product_name || product?.name || "Produk",
+    soldUnits: Number(product?.total_sold_units ?? product?.qty ?? 0),
+    soldValue: Number(product?.total_sold_value ?? 0),
   }));
 
   const totalStock = (stockAlerts || []).reduce((sum: number, alert: any) => {
@@ -110,6 +124,36 @@ export default function DashboardHome() {
     navigator.clipboard.writeText(`/link ${tgCode}`);
     setTgCopied(true);
     setTimeout(() => setTgCopied(false), 2000);
+  };
+
+  const handleAlertAction = (alert: any) => {
+    const isCritical = alert.normalizedStatus === "critical" || alert.normalizedStatus === "stockout";
+    const prompt = isCritical
+      ? [
+          `Produk: ${alert.productLabel}`,
+          `Status: KRITIS`,
+          `Stok saat ini: ${alert.current_stock} unit`,
+          `Estimasi habis: ${alert.daysLeft} hari`,
+          "",
+          "Tolong buat rencana emergency restock:",
+          "1. Estimasi jumlah order aman untuk 14 hari",
+          "2. Opsi supplier cepat + prioritas",
+          "3. Risiko kalau order ditunda",
+        ].join("\n")
+      : [
+          `Produk: ${alert.productLabel}`,
+          `Status: WARNING`,
+          `Stok saat ini: ${alert.current_stock} unit`,
+          `Estimasi habis: ${alert.daysLeft} hari`,
+          "",
+          "Bantu susun rencana order yang efisien:",
+          "1. Kapan waktu order terbaik",
+          "2. Jumlah order awal + buffer",
+          "3. Strategi supaya tidak jadi deadstock",
+        ].join("\n");
+
+    setSessionData("assistant_prompt", prompt);
+    navigate("/dashboard/assistant");
   };
 
   if (!hasData) {
@@ -224,6 +268,7 @@ export default function DashboardHome() {
                 quantity={alert.current_stock}
                 days={alert.daysLeft}
                 action={alert.normalizedStatus === "critical" || alert.normalizedStatus === "stockout" ? "PESAN SEKARANG" : "Rencana Order"}
+                onAction={() => handleAlertAction(alert)}
               />
             ))
           )}
@@ -231,7 +276,7 @@ export default function DashboardHome() {
       </div>
 
       {/* Forecast Chart */}
-      {forecastChart && forecastChart.length > 0 && (
+      {normalizedForecastChart.length > 0 && (
         <div
           className="rounded-xl border p-6"
           style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-bg-card)" }}
@@ -240,7 +285,7 @@ export default function DashboardHome() {
             📈 Prediksi Demand 30 Hari
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={forecastChart}>
+            <AreaChart data={normalizedForecastChart}>
               <defs>
                 <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--color-info)" stopOpacity={0.3} />
@@ -257,7 +302,7 @@ export default function DashboardHome() {
               />
               <Area
                 type="monotone"
-                dataKey="forecast"
+                dataKey="pointValue"
                 stroke="var(--color-info)"
                 fillOpacity={1}
                 fill="url(#colorForecast)"
@@ -276,7 +321,7 @@ export default function DashboardHome() {
           🏆 Produk Terlaku
         </h2>
         <div className="space-y-3">
-          {bestSellers.slice(0, 5).map((product: any, i: number) => (
+          {normalizedBestSellers.slice(0, 5).map((product: any, i: number) => (
             <div
               key={i}
               className="flex items-center justify-between p-3 rounded-lg"
@@ -291,15 +336,15 @@ export default function DashboardHome() {
                 </div>
                 <div>
                   <p style={{ color: "var(--color-text-primary)" }} className="font-semibold">
-                    {product.product_name}
+                    {product.label}
                   </p>
                   <p style={{ color: "var(--color-text-secondary)" }} className="text-xs">
-                    Terjual: {product.total_sold_units} unit
+                    Terjual: {product.soldUnits} unit
                   </p>
                 </div>
               </div>
               <p style={{ color: "var(--color-accent)" }} className="font-bold">
-                Rp {(product.total_sold_value || 0).toLocaleString("id-ID")}
+                Rp {product.soldValue.toLocaleString("id-ID")}
               </p>
             </div>
           ))}
@@ -314,6 +359,21 @@ export default function DashboardHome() {
         <h3 className="text-lg font-bold mb-4" style={{ color: "var(--color-text-primary)" }}>
           🤖 Link ke Telegram Bot
         </h3>
+
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            className="border-0"
+            style={{ backgroundColor: "var(--color-safe)", color: "white" }}
+          >
+            <a href="https://t.me/Kang_Supply_Bot" target="_blank" rel="noopener noreferrer">
+              Tanya via Telegram
+            </a>
+          </Button>
+          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Chat langsung untuk cek stok, forecast, dan rekomendasi restock.
+          </span>
+        </div>
 
         {tgLinked ? (
           <div style={{ color: "var(--color-safe)" }} className="p-4 rounded-lg bg-green-50 border border-green-200">
