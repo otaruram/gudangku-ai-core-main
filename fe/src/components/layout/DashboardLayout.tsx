@@ -27,15 +27,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
-  { title: "Upload CSV", href: "/dashboard/upload", icon: Upload },
-  { title: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-  { title: "Forecaster", href: "/dashboard/forecaster", icon: TrendingUp },
-  { title: "Event Simulator", href: "/dashboard/seasonal", icon: Calendar },
-  { title: "Doc Assistant", href: "/dashboard/assistant", icon: MessageSquare },
-  { title: "History", href: "/dashboard/history", icon: Clock },
-];
-
 const adminNavItem = { title: "Admin Panel", href: "/dashboard/admin", icon: Shield };
 
 import { supabase } from "@/lib/supabaseClient";
@@ -43,7 +34,18 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getAuthHeaders } from "@/lib/config";
 import { OnboardingTour } from "@/components/features/OnboardingTour";
-import { OnboardingTour } from "@/components/features/OnboardingTour";
+
+const coreNavItems = [
+  { title: "Upload CSV", href: "/dashboard/upload", icon: Upload },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+  { title: "History", href: "/dashboard/history", icon: Clock },
+];
+
+const aiNavItems = [
+  { title: "Forecaster", href: "/dashboard/forecaster", icon: TrendingUp },
+  { title: "Event Simulator", href: "/dashboard/seasonal", icon: Calendar },
+  { title: "Doc Assistant", href: "/dashboard/assistant", icon: MessageSquare },
+];
 
 export function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -179,9 +181,41 @@ export function DashboardLayout() {
   };
 
   const getCurrentPageTitle = () => {
-    const current = navItems.find(item => location.pathname === item.href);
+    const allNavItems = [...coreNavItems, ...aiNavItems];
+    const current = allNavItems.find(item => location.pathname === item.href);
     return current?.title || "Dashboard";
   };
+
+  const renderNavSection = (
+    title: string,
+    items: Array<{ title: string; href: string; icon: any }>
+  ) => (
+    <div className="space-y-1">
+      {!collapsed && (
+        <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-sidebar-muted/80">
+          {title}
+        </p>
+      )}
+      {items.map((item) => {
+        const isActive = location.pathname === item.href;
+        return (
+          <Link
+            key={item.href}
+            to={item.href}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              isActive
+                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            )}
+          >
+            <item.icon className="h-5 w-5 shrink-0" />
+            <span className={cn(collapsed ? "lg:hidden" : "")}>{item.title}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -238,25 +272,10 @@ export function DashboardLayout() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-3">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                      : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  )}
-                >
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  <span className={cn(collapsed ? "lg:hidden" : "")}>{item.title}</span>
-                </Link>
-              );
-            })}
+          <nav className="flex-1 space-y-2 p-3">
+            {renderNavSection("Core", coreNavItems)}
+            <div className="my-1 border-t border-sidebar-border/70" />
+            {renderNavSection("AI Tools", aiNavItems)}
             {/* Admin nav — only visible to admins */}
             {userRole === "admin" && (() => {
               const isActive = location.pathname === adminNavItem.href;

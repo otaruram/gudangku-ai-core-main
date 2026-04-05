@@ -121,16 +121,34 @@ Berikan:
 
     try {
       const authHeaders = await getAuthHeaders();
-      const { API_URL } = await import("@/lib/config");
-      const res = await fetch(`${API_URL}/chat`, {
+      const csvContext = localStorage.getItem("csvContext") || "";
+      const fullQuestion = csvContext
+        ? `INVENTORY DATA:\n${csvContext}\n\nEVENT SIMULATION REQUEST:\n${prompt}`
+        : prompt;
+
+      const res = await fetch(`/api/chat`, {
         method: "POST",
         headers: { ...authHeaders, "Content-Type": "application/json" },
-        body: JSON.stringify({ message: prompt }),
+        body: JSON.stringify({ question: fullQuestion }),
       });
-      if (res.ok) {
-        const d = await res.json();
-        setAiAdvice(d.response || d.message || "");
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({} as any));
+        if (res.status === 429) {
+          const retrySec = Math.ceil((errBody.retry_after_ms ?? 0) / 1000);
+          setAiAdvice(
+            `Rate limit aktif. Coba lagi dalam ${retrySec > 0 ? retrySec : 10} detik.\n\n` +
+            `Tip: Pertanyaan yang sama biasanya kena cache Redis dan tidak potong kredit.`
+          );
+        } else {
+          setAiAdvice(errBody.error || "Tidak dapat memproses strategi AI saat ini.");
+        }
+        return;
       }
+
+      const d = await res.json();
+      const cachedNote = d.cached ? "\n\nCached response (gratis, tidak potong kredit)." : "";
+      setAiAdvice((d.response || "") + cachedNote);
     } catch {
       setAiAdvice("Tidak dapat terhubung ke AI. Pastikan kamu sudah login dan memiliki kredit.");
     } finally {

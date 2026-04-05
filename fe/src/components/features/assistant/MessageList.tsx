@@ -10,9 +10,9 @@ interface MessageListProps {
 
 export function MessageList({ messages, isTyping, messagesEndRef }: MessageListProps) {
     return (
-        <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card">
-            <div className="h-full overflow-y-auto p-3 sm:p-4">
-                <div className="mx-auto max-w-2xl space-y-3 sm:space-y-4">
+        <div className="flex-1 overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="h-full overflow-y-auto p-4 sm:p-5">
+                <div className="mx-auto max-w-4xl space-y-3 sm:space-y-4">
                     {messages.map((message) => (
                         <div
                             key={message.id}

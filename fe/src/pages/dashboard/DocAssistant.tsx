@@ -24,7 +24,7 @@ export default function DocAssistant() {
   }, []);
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col sm:h-[calc(100vh-10rem)]">
+    <div className="flex h-[calc(100vh-6.5rem)] min-h-[620px] flex-col sm:h-[calc(100vh-8rem)]">
       {/* Page Header */}
       <div className="mb-3 sm:mb-4 flex items-center justify-between">
         <div>
