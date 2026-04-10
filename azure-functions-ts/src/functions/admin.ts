@@ -43,24 +43,50 @@ async function listUsersHandler(
   const forbidden = await requireAdmin(claims, req);
   if (forbidden) return forbidden;
 
+  const limitRaw = parseInt(req.query.get("limit") ?? "50", 10);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
+  const includeActivity = req.query.get("includeActivity") === "true";
+  const cursor = req.query.get("cursor") ?? undefined;
+
   const container = getContainer("users");
-  const { resources } = await container.items
-    .query<UserDocument>("SELECT * FROM c ORDER BY c.last_refresh_date DESC")
-    .fetchAll();
+  const iterator = container.items.query<UserDocument>(
+    "SELECT c.id, c.email, c.current_credits, c.last_refresh_date, c.role, c.banned FROM c ORDER BY c.last_refresh_date DESC",
+    { maxItemCount: limit, continuationToken: cursor }
+  );
+  const { resources, continuationToken } = await iterator.fetchNext();
+
+  if (!includeActivity) {
+    return {
+      status: 200,
+      jsonBody: {
+        users: (resources ?? []).map((u) => ({
+          id: u.id,
+          email: u.email ?? "unknown",
+          current_credits: u.current_credits,
+          last_refresh_date: u.last_refresh_date,
+          role: u.role ?? "user",
+          banned: u.banned ?? false,
+        })),
+        page_size: limit,
+        next_cursor: continuationToken ?? null,
+        include_activity: false,
+      },
+    };
+  }
 
   // Get recent activity counts
   const chatContainer = getContainer("chat_logs");
   const forecastContainer = getContainer("prediction_history");
 
   const users = await Promise.all(
-    resources.map(async (u) => {
+    (resources ?? []).map(async (u) => {
       // Count chats
       const { resources: chatCount } = await chatContainer.items
-        .query({ query: "SELECT VALUE COUNT(1) FROM c WHERE c.user_id = @uid", parameters: [{ name: "@uid", value: u.id }] })
+        .query({ query: "SELECT VALUE COUNT(1) FROM c WHERE c.userId = @uid", parameters: [{ name: "@uid", value: u.id }] })
         .fetchAll();
       // Count forecasts
       const { resources: forecastCount } = await forecastContainer.items
-        .query({ query: "SELECT VALUE COUNT(1) FROM c WHERE c.user_id = @uid", parameters: [{ name: "@uid", value: u.id }] })
+        .query({ query: "SELECT VALUE COUNT(1) FROM c WHERE c.userId = @uid", parameters: [{ name: "@uid", value: u.id }] })
         .fetchAll();
 
       return {
@@ -78,7 +104,12 @@ async function listUsersHandler(
 
   return {
     status: 200,
-    jsonBody: { users, total: users.length },
+    jsonBody: {
+      users,
+      page_size: limit,
+      next_cursor: continuationToken ?? null,
+      include_activity: true,
+    },
   };
 }
 

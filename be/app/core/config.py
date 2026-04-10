@@ -12,10 +12,10 @@ class Settings(BaseSettings):
     
     # CORS & Domain Settings
     FRONTEND_URL: str = "http://localhost:5000"
-    PORT: int = 5173
+    PORT: int = 8000
     
     # Backend Domains (from .env)
-    BACKEND_DOMAINS: str = "http://localhost:5173,https://gudangku-ai.onrender.com"
+    BACKEND_DOMAINS: str = "http://localhost:8000,https://gudangku-ai.onrender.com"
     
     class Config:
         env_file = ".env"

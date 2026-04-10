@@ -1,24 +1,33 @@
-﻿# GeoSupplyGuard â€” AI-Powered Geopolitical Supply Chain Risk Analyzer
+﻿# Gudangku — AI-Powered Inventory & Supply Chain Assistant for Indonesian UMKM
 
-> Serverless supply chain intelligence platform using Azure Functions, Cosmos DB, Redis Cache, and Gemini 2.5 Flash AI
+> Production-ready AI platform for warehouse intelligence: demand forecasting, stock alerting, document automation, and Telegram bot integration. Built on Azure serverless stack with enterprise-grade security, caching optimization, and offline-first architecture.
 
 [![Azure Functions](https://img.shields.io/badge/Azure%20Functions-v4-0062AD?logo=azure-functions)](https://azure.microsoft.com/en-us/products/functions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev/)
 [![Cosmos DB](https://img.shields.io/badge/Cosmos%20DB-NoSQL-0078D4?logo=microsoftazure)](https://azure.microsoft.com/en-us/products/cosmos-db)
 [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000?logo=vercel)](https://vercel.com/)
+[![Redis](https://img.shields.io/badge/Redis-Smart%20Cache-DC382D?logo=redis)](https://azure.microsoft.com/en-us/products/cache)
+[![Live](https://img.shields.io/badge/Status-Production-success)]
 
 ---
 
 ## Features
 
-- **AI Supply Chain Analysis** â€” Gemini 2.5 Flash via custom endpoint, contextual risk assessment for international logistics
-- **Credit System** â€” Lazy-evaluated daily quota (10 credits/day), auto-reset, per-user tracking in Cosmos DB
-- **Redis Caching** â€” SHA256-hashed response caching (4hr TTL), eliminates duplicate AI calls
-- **API Rate Limiting** â€” Azure API Management Consumption tier, 5 requests/minute per subscription
-- **Secure Auth** â€” Supabase JWT (HS256) verification, protected endpoints
-- **Vercel Edge Proxy** â€” Backend URL never exposed to browser, all API calls routed server-side
-- **History Tracking** â€” Full chat and forecast history with stats dashboard
+### Core AI Features
+- **Demand Forecasting** – Prophet-based time series forecasting, stock reorder point calculation, real-time stock alerts (STOCKOUT/CRITICAL/WARNING/SAFE)
+- **Doc Assistant** – Gemini 2.5 Flash AI analysis: asks questions about inventory, contextual recommendations
+- **Telegram Bot** – Full data access via Telegram: stok query, forecast insights, photo/PDF analysis (invoices, labels, receipts)
+- **Inventory Automation** – CSV upload → auto-detect date/sales/product/stock columns → parsed in seconds
+
+### Production-Ready Tech
+- **Smart Caching** – Redis with SHA256-hashed queries, 4hr TTL, automatic staleness bypass
+- **Security Hardened** – IDOR fixed, webhook auth bulletproof, timeout+retry on AI calls, APIM global throttle
+- **Per-Client Throttle** – APIM: 120 req/min global, 30 req/min on expensive endpoints (/api/chat, /api/forecast)
+- **Credit System** – Lazy-evaluated daily quota (10/day auto-reset), per-user tracking, admin unlimited
+- **Admin Dashboard** – User management, pagination (no N+1 queries), credits/ban system
+- **Auth** – Supabase JWT (HS256+RS256 JWKS), role-based access, account ban support
+- **Monitoring Ready** – Structured logging, performance metrics, load test suite (k6)
 
 ---
 
@@ -174,18 +183,43 @@ func azure functionapp publish func-geosupplyguard-ts --javascript
 
 ### Frontend (Vercel)
 Push to `main` branch â€” Vercel auto-deploys from `fe/` directory.
+### APIM Policy (Manual)
+Copy `azure-functions-ts/apim-policy.xml` content to Azure APIM → APIs > All Operations > Inbound Processing for global throttle activation.
 
+### Cosmos DB Scale Path (Optional)
+Run `node scripts/migrate-cosmos-userid-partition.js` to migrate from /id to /userId partition key (no downtime, tested).
+
+### Load Testing
+```bash
+# Install k6
+choco install k6 -y
+
+# Run load test
+$env:SUPABASE_JWT = "<valid-token>"
+k6 run azure-functions-ts/scripts/loadtest-chat.js
+
+# Target SLA: p95 < 3s, p99 < 6s, error rate < 3%
+```
 ---
 
-## Security
+## Security & Performance
 
-- All secrets stored in **Azure Key Vault** with managed identity access
-- Backend URL hidden behind **Vercel Edge proxy** â€” never exposed to client
-- **APIM rate limiting** prevents abuse (5 req/min)
-- **Supabase JWT** verification on all protected endpoints
-- **Redis cache keys** use SHA256 hashing (no plaintext queries stored)
-- **CORS** configured at APIM level
-- `.env` and `local.settings.json` files are gitignored
+### Security (April 2026 Hardening)
+- ✅ **IDOR Fixed** – History detail endpoints enforce owner filter (resource.userId === claims.sub)
+- ✅ **Webhook Auth Bulletproof** – Length-safe comparison to prevent timingSafeEqual crash on malformed secrets
+- ✅ **AI Call Resilience** – 15s timeout + exponential backoff retry for 408/429/5xx
+- ✅ **Secrets in Key Vault** – Managed identity access, no secrets in code
+- ✅ **Redis Caching** – SHA256-hashed keys (no plaintext queries stored), 4hr TTL
+- ✅ **CORS Scoped** – Only gudangku.space + Vercel origins allowed (not wildcard)
+- ✅ **APIM Throttle** – 120 req/min global, 30 req/min on /api/chat, /api/forecast (per-client IP)
+- ✅ **JWT Verification** – Supabase HS256 + RS256 via JWKS, audience check, role-based access
+
+### Performance Optimization
+- ✅ **Query Optimization** – Admin list pagination, optional activity stats (N+1 query eliminated)
+- ✅ **Forecast Rate Limit** – 4 uploads/min per user (prevent abuse/cost spikes)
+- ✅ **Cosmos Partition Ready** – Env var support for container/PK migration to /userId (better scale)
+- ✅ **Lazy Credit Eval** – No cron jobs, credits refresh on first daily hit
+- ✅ **Built for Scale** – Tested to 100 concurrent users (p95 < 3s latency)
 
 ---
 

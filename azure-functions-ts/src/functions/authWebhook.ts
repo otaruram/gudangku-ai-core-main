@@ -28,13 +28,14 @@ app.http("authWebhook", {
     }
 
     const incomingSecret = req.headers.get("x-webhook-secret") ?? "";
-    if (
-      !incomingSecret ||
-      !crypto.timingSafeEqual(
-        Buffer.from(webhookSecret),
-        Buffer.from(incomingSecret)
-      )
-    ) {
+    const expectedBuf = Buffer.from(webhookSecret);
+    const incomingBuf = Buffer.from(incomingSecret);
+    const isValid =
+      incomingSecret.length > 0 &&
+      incomingBuf.length === expectedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, incomingBuf);
+
+    if (!isValid) {
       console.warn("authWebhook: invalid or missing x-webhook-secret");
       return { status: 401, jsonBody: { error: "Unauthorized" } };
     }

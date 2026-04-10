@@ -15,6 +15,26 @@ const CONTAINERS = {
 
 export type ContainerName = keyof typeof CONTAINERS;
 
+const CONTAINER_ENV_MAP: Record<ContainerName, string> = {
+  users: "COSMOS_CONTAINER_USERS",
+  chat_logs: "COSMOS_CONTAINER_CHAT_LOGS",
+  prediction_history: "COSMOS_CONTAINER_PREDICTION_HISTORY",
+};
+
+const PARTITION_KEY_ENV_MAP: Record<ContainerName, string> = {
+  users: "COSMOS_PK_USERS",
+  chat_logs: "COSMOS_PK_CHAT_LOGS",
+  prediction_history: "COSMOS_PK_PREDICTION_HISTORY",
+};
+
+function resolveContainerId(name: ContainerName): string {
+  return process.env[CONTAINER_ENV_MAP[name]] ?? name;
+}
+
+function resolvePartitionKeyPath(name: ContainerName): string {
+  return process.env[PARTITION_KEY_ENV_MAP[name]] ?? CONTAINERS[name];
+}
+
 function getClient(): CosmosClient {
   if (!_client) {
     const endpoint = process.env.COSMOS_ENDPOINT!;
@@ -33,7 +53,7 @@ export function getDatabase(): Database {
 }
 
 export function getContainer(name: ContainerName): Container {
-  return getDatabase().container(name);
+  return getDatabase().container(resolveContainerId(name));
 }
 
 /**
@@ -41,9 +61,11 @@ export function getContainer(name: ContainerName): Container {
  */
 export async function ensureContainers(): Promise<void> {
   const db = getDatabase();
-  for (const [name, pkPath] of Object.entries(CONTAINERS)) {
+  for (const name of Object.keys(CONTAINERS) as ContainerName[]) {
+    const id = resolveContainerId(name);
+    const pkPath = resolvePartitionKeyPath(name);
     await db.containers.createIfNotExists({
-      id: name,
+      id,
       partitionKey: { paths: [pkPath] },
     });
   }

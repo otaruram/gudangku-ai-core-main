@@ -12,6 +12,7 @@ import { withAuth, UserClaims } from "../shared/auth";
 import { callGemini } from "../shared/geminiService";
 import { consumeCredits, CreditError } from "../shared/creditSystem";
 import { getContainer } from "../shared/cosmosClient";
+import { checkRateLimit } from "../shared/redisCache";
 import { v4 as uuidv4 } from "uuid";
 
 interface Row {
@@ -167,6 +168,18 @@ async function forecastHandler(
   claims: UserClaims
 ): Promise<HttpResponseInit> {
   try {
+    // Rate limit forecast uploads to reduce abuse and cost spikes.
+    const rateCheck = await checkRateLimit(`forecast:${claims.sub}`, 60, 4);
+    if (!rateCheck.allowed) {
+      return {
+        status: 429,
+        jsonBody: {
+          error: "Rate limit exceeded. Please wait before uploading another file.",
+          retry_after_ms: rateCheck.retryAfterMs,
+        },
+      };
+    }
+
     const horizon = parseInt(req.params.horizon ?? "30", 10);
 
     // 1. Parse multipart form

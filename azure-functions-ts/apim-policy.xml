@@ -1,18 +1,46 @@
 <policies>
     <inbound>
         <base />
-        <rate-limit calls="5" renewal-period="60" />
+        <set-variable name="client-key" value="@(context.Request.Headers.GetValueOrDefault(&quot;X-Forwarded-For&quot;, context.Request.IpAddress ?? &quot;anonymous&quot;))" />
+
+        <!-- Global per-client throttle -->
+        <rate-limit-by-key
+            calls="120"
+            renewal-period="60"
+            counter-key="@((string)context.Variables[&quot;client-key&quot;])" />
+
+        <!-- Stricter throttle for expensive AI/file endpoints -->
+        <choose>
+            <when condition="@(
+                context.Request.Url.Path.Contains(&quot;/api/chat&quot;) ||
+                context.Request.Url.Path.Contains(&quot;/api/forecast&quot;) ||
+                context.Request.Url.Path.Contains(&quot;/api/telegram/webhook&quot;)
+            )">
+                <rate-limit-by-key
+                    calls="30"
+                    renewal-period="60"
+                    counter-key="@((string)context.Variables[&quot;client-key&quot;] + &quot;:expensive&quot;)" />
+            </when>
+        </choose>
+
         <cors allow-credentials="false">
             <allowed-origins>
-                <origin>*</origin>
+                <origin>https://gudangku.space</origin>
+                <origin>https://www.gudangku.space</origin>
+                <origin>https://gudangku-steel.vercel.app</origin>
             </allowed-origins>
             <allowed-methods>
                 <method>GET</method>
                 <method>POST</method>
+                <method>PUT</method>
+                <method>DELETE</method>
                 <method>OPTIONS</method>
             </allowed-methods>
             <allowed-headers>
-                <header>*</header>
+                <header>Content-Type</header>
+                <header>Authorization</header>
+                <header>x-webhook-secret</header>
+                <header>x-telegram-bot-api-secret-token</header>
             </allowed-headers>
         </cors>
     </inbound>

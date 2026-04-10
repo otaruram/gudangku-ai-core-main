@@ -31,6 +31,60 @@ interface GeminiResponse {
 
 // Bump when prompt/format/token settings change to avoid stale cached responses.
 const CACHE_VERSION = "v2_2048_tokens";
+const REQUEST_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 2;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function shouldRetryStatus(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+async function postWithRetry(
+  url: string,
+  payload: unknown,
+  apiKey: string
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if (res.ok) return res;
+
+      if (!shouldRetryStatus(res.status) || attempt === MAX_RETRIES) {
+        return res;
+      }
+
+      await sleep(300 * Math.pow(2, attempt));
+      continue;
+    } catch (err: any) {
+      lastError = err;
+      if (attempt === MAX_RETRIES) {
+        break;
+      }
+      await sleep(300 * Math.pow(2, attempt));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw new Error(`Gemini API request failed after retries: ${lastError?.message ?? "unknown error"}`);
+}
 
 /**
  * Call Gemini 2.5 Flash via Sumopod OpenAI-compatible API, with Redis caching.
@@ -65,15 +119,8 @@ export async function callGemini(
 
   const url = `${baseUrl}/v1/chat/completions`;
 
-  // 3. Call API
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  // 3. Call API with timeout + retries for transient failures
+  const res = await postWithRetry(url, payload, apiKey);
 
   if (!res.ok) {
     const errBody = await res.text();

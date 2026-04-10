@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Boxes, Sparkles } from "lucide-react";
+import { Package } from "lucide-react";
 
 interface LogoProps {
   className?: string;
@@ -14,17 +14,12 @@ export function Logo({ className, variant = "dark", showText = true }: LogoProps
     <div className={cn("flex items-center gap-3", className)}>
       {/* Logo Mark */}
       <div
-        className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border"
-        style={{
-          borderColor: "var(--color-border)",
-          background: "linear-gradient(140deg, rgba(16,185,129,0.28), rgba(6,182,212,0.22))",
-          boxShadow: "0 8px 18px rgba(0, 0, 0, 0.22)",
-        }}
+        className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
         aria-label="Gudangku logo"
       >
-        <Boxes className="h-4 w-4" style={{ color: "var(--color-text-primary)" }} />
-        <Sparkles className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5" style={{ color: "var(--color-safe)" }} />
+        <Package className="h-5 w-5" />
       </div>
+
 
       {showText && (
         <span className={cn(
